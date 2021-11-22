@@ -338,6 +338,8 @@ If the comment doesn't exist, offer to insert it."
   :ensure t
   :config (setq lsp-idle-delay 0.1
                 lsp-headerline-breadcrumb-enable nil
+                lsp-before-save-edits nil
+                lsp-enable-on-type-formatting nil
                 company-minimum-prefix-length 1)
           (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
   :hook (c-mode . lsp)

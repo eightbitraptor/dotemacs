@@ -311,6 +311,30 @@ If the comment doesn't exist, offer to insert it."
               (append '("bundle" "exec") command)))
           (setq enh-ruby-hanging-brace-indent-level 2))
 
+;;; Language: C
+
+;;; the Rubo core team maintain an c-mode style specifically for the
+;;; MRI source code, let's use it if we have Ruby checked out.
+(let ((ruby-misc-dir "~/src/ruby/misc"))
+  (if (file-directory-p ruby-misc-dir)
+      (progn
+        (add-to-list 'load-path ruby-misc-dir)
+        (require 'ruby-style))))
+
+(use-package ruby-style)
+
+(use-package lsp-mode
+  :ensure t
+  :config (setq lsp-idle-delay 0.1
+                lsp-headerline-breadcrumb-enable nil
+                company-minimum-prefix-length 1)
+          (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
+  :hook (c-mode . lsp)
+  :init (yas-global-mode)
+  :after (which-key)
+  :bind-keymap ("C-c l" . lsp-command-map))
+
+
 
 (use-package web-mode
   :ensure t

@@ -72,9 +72,9 @@
 
 (let ((mvh-customisations-file "~/.emacs.d/customisations.el"))
   (unless (file-exists-p mvh-customisations-file)
-    (write-region "" nil mvh-customisations-file)))
-(setq custom-file "~/.emacs.d/customisations.el")
-(load custom-file)
+    (write-region "" nil mvh-customisations-file))
+  (setq custom-file mvh-customisations-file)
+  (load custom-file))
 
 (setq auto-save-default nil)
 (setq backup-directory-alist

@@ -112,7 +112,7 @@
 (global-set-key (kbd "s-<return>") 'toggle-frame-fullscreen)
 
 (setq-default indent-tabs-mode nil)
-;;(electric-indent-mode -1)
+(electric-indent-mode -1)
 
 (delete-selection-mode t)
 

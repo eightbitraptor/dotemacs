@@ -335,6 +335,7 @@ If the comment doesn't exist, offer to insert it."
   :bind-keymap ("C-c l" . lsp-command-map))
 
 
+;;; Language: HTML/Web stuff
 
 (use-package web-mode
   :ensure t

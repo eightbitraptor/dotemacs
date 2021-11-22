@@ -121,6 +121,10 @@
 
 ;;; Navigation and Search
 
+(use-package which-key
+  :ensure t
+  :config (which-key-mode))
+
 (use-package undo-tree
   :ensure t
   :config (global-undo-tree-mode))

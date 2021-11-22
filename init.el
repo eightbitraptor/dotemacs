@@ -342,7 +342,8 @@ If the comment doesn't exist, offer to insert it."
                 lsp-enable-on-type-formatting nil
                 company-minimum-prefix-length 1)
           (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
-  :hook (c-mode . lsp)
+  :hook ((c-mode . lsp)
+         (c++-mode . lsp))
   :init (yas-global-mode)
   :after (which-key)
   :bind-keymap ("C-c l" . lsp-command-map))

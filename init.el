@@ -159,6 +159,12 @@
 (use-package ivy-hydra
   :ensure t)
 
+(use-package ivy-xref
+  :ensure t
+  :init (when (>= emacs-major-version 27)
+          (setq xref-show-definitions-function #'ivy-xref-show-defs))
+  (setq xref-show-xrefs-function #'ivy-xref-show-xrefs))
+
 (use-package minimap
   :ensure t
   :config (setq minimap-window-location 'right)

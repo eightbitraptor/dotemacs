@@ -32,6 +32,8 @@
         (setq exec-path-from-shell-check-startup-files nil)
         (exec-path-from-shell-initialize))
 
+(use-package no-littering :ensure t)
+
 ;;; Themes and appearance
 
 ;;(use-package feebleline

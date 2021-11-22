@@ -126,7 +126,8 @@
 
 (use-package which-key
   :ensure t
-  :config (which-key-mode))
+  :config (which-key-mode)
+          (setq which-key-idle-delay 3))
 
 (use-package undo-tree
   :ensure t

@@ -28,7 +28,10 @@
 (use-package exec-path-from-shell
   :ensure t
   :if (memq window-system '(mac ns x))
-  :init (setq exec-path-from-shell-variables '("PATH" "MANPATH" "GEM_HOME" "GEM_PATH"))
+  :init (setq exec-path-from-shell-variables '("PATH"
+                                               "MANPATH"
+                                               "GEM_HOME"
+                                               "GEM_PATH"))
         (setq exec-path-from-shell-check-startup-files nil)
         (exec-path-from-shell-initialize))
 

@@ -196,6 +196,7 @@
                 (append '(".buildkite"
                           ".github"
                           ".bundle"
+                          ".cache"
                           ".dev"
                           "tmp"
                           "log"

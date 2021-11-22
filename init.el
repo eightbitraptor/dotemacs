@@ -1,6 +1,9 @@
 ;;; Startup Time - START
 (defvar *emacs-load-start* (current-time))
 
+;;; Uncomment this in case of startup errors
+;;;(setq debug-on-error t)
+
 ;;; Package system
 
 (require 'package)

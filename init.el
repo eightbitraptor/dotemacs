@@ -340,14 +340,57 @@ If the comment doesn't exist, offer to insert it."
                 lsp-headerline-breadcrumb-enable nil
                 lsp-before-save-edits nil
                 lsp-enable-on-type-formatting nil
-                company-minimum-prefix-length 1)
+                company-minimum-prefix-length 1
+                lsp-rust-analyzer-cargo-watch-command "clippy"
+                lsp-eldoc-render-all t
+                lsp-idle-delay 0.6
+                lsp-rust-analyzer-server-display-inlay-hints t)
           (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
+          (add-hook 'lsp-mode-hook 'lsp-ui-mode)
   :hook ((c-mode . lsp)
-         (c++-mode . lsp))
+         (c++-mode . lsp)
+         (rustic-mode . lsp))
   :init (yas-global-mode)
   :after (which-key)
   :bind-keymap ("C-c l" . lsp-command-map))
 
+(use-package lsp-ui
+  :ensure t
+  :commands lsp-ui-mode
+  :custom (lsp-ui-peek-always-show t)
+          (lsp-ui-sideline-show-hover t)
+          (lsp-ui-doc-enable nil))
+
+;;; Language: Rust
+
+(use-package rustic
+  :ensure
+  :bind (:map rustic-mode-map
+              ("M-j" . lsp-ui-imenu)
+              ("M-?" . lsp-find-references)
+              ("C-c C-c l" . flycheck-list-errors)
+              ("C-c C-c a" . lsp-execute-code-action)
+              ("C-c C-c r" . lsp-rename)
+              ("C-c C-c q" . lsp-workspace-restart)
+              ("C-c C-c Q" . lsp-workspace-shutdown)
+              ("C-c C-c s" . lsp-rust-analyzer-status))
+  :config
+  ;; uncomment for less flashiness
+  ;; (setq lsp-eldoc-hook nil)
+  ;; (setq lsp-enable-symbol-highlighting nil)
+  ;; (setq lsp-signature-auto-activate nil)
+
+  ;; comment to disable rustfmt on save
+  (setq rustic-format-on-save t)
+  (add-hook 'rustic-mode-hook 'mvh/rustic-mode-hook))
+
+(defun mvh/rustic-mode-hook ()
+  ;; so that run C-c C-c C-r works without having to confirm, but don't try to
+  ;; save rust buffers that are not file visiting. Once
+  ;; https://github.com/brotzeit/rustic/issues/253 has been resolved this should
+  ;; no longer be necessary.
+  (when buffer-file-name
+    (setq-local buffer-save-without-query t)))
 
 ;;; Language: HTML/Web stuff
 

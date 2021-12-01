@@ -347,20 +347,12 @@ If the comment doesn't exist, offer to insert it."
                 lsp-idle-delay 0.6
                 lsp-rust-analyzer-server-display-inlay-hints t)
           (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
-          (add-hook 'lsp-mode-hook 'lsp-ui-mode)
   :hook ((c-mode . lsp)
          (c++-mode . lsp)
          (rustic-mode . lsp))
   :init (yas-global-mode)
   :after (which-key)
   :bind-keymap ("C-c l" . lsp-command-map))
-
-(use-package lsp-ui
-  :ensure t
-  :commands lsp-ui-mode
-  :custom (lsp-ui-peek-always-show t)
-          (lsp-ui-sideline-show-hover t)
-          (lsp-ui-doc-enable nil))
 
 ;;; Language: Rust
 

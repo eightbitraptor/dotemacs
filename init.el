@@ -330,9 +330,9 @@ If the comment doesn't exist, offer to insert it."
   (if (file-directory-p ruby-misc-dir)
       (progn
         (add-to-list 'load-path ruby-misc-dir)
-        (require 'ruby-style))))
+        (require 'ruby-style)
+        (use-package ruby-style))))
 
-(use-package ruby-style)
 
 (use-package lsp-mode
   :ensure t

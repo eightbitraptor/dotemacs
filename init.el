@@ -324,7 +324,7 @@ If the comment doesn't exist, offer to insert it."
 
 ;;; Language: C
 
-;;; the Rubo core team maintain an c-mode style specifically for the
+;;; the Ruby core team maintain an c-mode style specifically for the
 ;;; MRI source code, let's use it if we have Ruby checked out.
 (let ((ruby-misc-dir "~/src/ruby/misc"))
   (if (file-directory-p ruby-misc-dir)
@@ -333,6 +333,7 @@ If the comment doesn't exist, offer to insert it."
         (require 'ruby-style)
         (use-package ruby-style))))
 
+;;; Language Server
 
 (use-package lsp-mode
   :ensure t
@@ -385,10 +386,10 @@ If the comment doesn't exist, offer to insert it."
   (add-hook 'rustic-mode-hook 'mvh/rustic-mode-hook))
 
 (defun mvh/rustic-mode-hook ()
-  ;; so that run C-c C-c C-r works without having to confirm, but don't try to
-  ;; save rust buffers that are not file visiting. Once
-  ;; https://github.com/brotzeit/rustic/issues/253 has been resolved this should
-  ;; no longer be necessary.
+  ;; so that run C-c C-c C-r works without having to confirm, but
+  ;; don't try to save rust buffers that are not file visiting. Once
+  ;; https://github.com/brotzeit/rustic/issues/253 has been resolved
+  ;; this should no longer be necessary.
   (when buffer-file-name
     (setq-local buffer-save-without-query t)))
 

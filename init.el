@@ -442,7 +442,8 @@ If the comment doesn't exist, offer to insert it."
 (use-package htmlize :ensure t)
 (use-package org
   :ensure t
-  :config (add-hook 'org-shiftup-final-hook 'windmove-up)
+  :config (setq org-startup-truncated 1)
+          (add-hook 'org-shiftup-final-hook 'windmove-up)
           (add-hook 'org-shiftleft-final-hook 'windmove-left)
           (add-hook 'org-shiftdown-final-hook 'windmove-down)
           (add-hook 'org-shiftright-final-hook 'windmove-right)
@@ -450,11 +451,15 @@ If the comment doesn't exist, offer to insert it."
   :mode ("\\.org" . org-mode))
 
 (use-package org-journal
-  :ensure t)
+  :ensure t
+  :init (setq org-journal-prefix-key "C-c j ")
+  :custom (org-journal-dir "~/Documents/log_books/")
+          (org-journal-file-format "%Y%m%d")
+          (org-journal-date-format "%A %d %b %Y"))
 
-;; Server
-;;(unless (bound-and-true-p server-running-p)
-;; (server-start))
+  ;; Server
+  ;;(unless (bound-and-true-p server-running-p)
+  ;; (server-start))
 
 ;; Startup Time - END
 (message "My .emacs loaded in %ds" (cl-destructuring-bind

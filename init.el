@@ -364,8 +364,7 @@ If the comment doesn't exist, offer to insert it."
 
 (use-package lsp-ivy
   :ensure t
-  :bind (:map lsp-command-map
-              ("g s" . 'lsp-ivy-workspace-symbol)))
+  :bind ("M-t" . 'lsp-ivy-workspace-symbol))
 
 
 ;;; Language: Rust

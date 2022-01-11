@@ -48,11 +48,11 @@
 
 (use-package doom-themes
   :ensure t
-  :init (load-theme 'doom-laserwave t))
+  :init (load-theme 'doom-1337 t))
 
-;;(use-package nyan-mode
-;;  :ensure t
-;;  :init (nyan-mode))
+(use-package nyan-mode
+  :ensure t
+  :init (nyan-mode))
 
 (setq-default cursor-type 'bar)
 (toggle-scroll-bar -1)

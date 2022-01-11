@@ -120,6 +120,8 @@
 (setq-default indent-tabs-mode nil)
 (electric-indent-mode -1)
 
+(setq-default c-basic-offset 4)
+
 (delete-selection-mode t)
 
 ;;; Navigation and Search
@@ -341,9 +343,15 @@ If the comment doesn't exist, offer to insert it."
                 lsp-headerline-breadcrumb-enable nil
                 lsp-before-save-edits nil
                 lsp-enable-on-type-formatting nil
+                lsp-signature-auto-activate nil
+                lsp-signature-render-documentation nil
+                lsp-completion-enable-additional-text-edit nil
+                lsp-completion-show-detail 1
+                lsp-completion-show-kind 1
                 company-minimum-prefix-length 1
                 lsp-rust-analyzer-cargo-watch-command "clippy"
-                lsp-eldoc-render-all t
+                lsp-eldoc-render-all nil
+                lsp-ui-doc-enable nil
                 lsp-idle-delay 0.6
                 lsp-rust-analyzer-server-display-inlay-hints t)
           (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
@@ -352,7 +360,13 @@ If the comment doesn't exist, offer to insert it."
          (rustic-mode . lsp))
   :init (yas-global-mode)
   :after (which-key)
-  :bind-keymap ("C-c l" . lsp-command-map))
+  :bind-keymap ("M-l" . lsp-command-map))
+
+(use-package lsp-ivy
+  :ensure t
+  :bind (:map lsp-command-map
+              ("g s" . 'lsp-ivy-workspace-symbol)))
+
 
 ;;; Language: Rust
 

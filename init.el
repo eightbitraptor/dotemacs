@@ -364,7 +364,10 @@ If the comment doesn't exist, offer to insert it."
 
 (use-package lsp-ivy
   :ensure t
-  :bind ("M-t" . 'lsp-ivy-workspace-symbol))
+  :bind ("M-t" . 'lsp-ivy-workspace-symbol)
+  :config (advice-add 'lsp-ivy--goto-symbol :before
+                      (lambda (arg)
+                        (xref-push-marker-stack))))
 
 
 ;;; Language: Rust

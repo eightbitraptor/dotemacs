@@ -370,13 +370,13 @@ If the comment doesn't exist, offer to insert it."
                       (lambda (arg)
                         (xref-push-marker-stack))))
 
+(use-package lsp-ui)'
 
 ;;; Language: Rust
 
 (use-package rustic
   :ensure
   :bind (:map rustic-mode-map
-              ("M-j" . lsp-ui-imenu)
               ("M-?" . lsp-find-references)
               ("C-c C-c l" . flycheck-list-errors)
               ("C-c C-c a" . lsp-execute-code-action)

@@ -351,6 +351,7 @@ If the comment doesn't exist, offer to insert it."
                 company-minimum-prefix-length 1
                 lsp-rust-analyzer-cargo-watch-command "clippy"
                 lsp-eldoc-render-all nil
+                lsp-lens-enable nil
                 lsp-ui-doc-enable nil
                 lsp-idle-delay 0.6
                 lsp-rust-analyzer-server-display-inlay-hints t)

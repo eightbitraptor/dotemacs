@@ -48,7 +48,7 @@
 
 (use-package doom-themes
   :ensure t
-  :init (load-theme 'doom-1337 t))
+  :init (load-theme 'doom-outrun-electric t))
 
 (use-package nyan-mode
   :ensure t

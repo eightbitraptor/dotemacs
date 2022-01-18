@@ -384,15 +384,11 @@ If the comment doesn't exist, offer to insert it."
               ("C-c C-c q" . lsp-workspace-restart)
               ("C-c C-c Q" . lsp-workspace-shutdown)
               ("C-c C-c s" . lsp-rust-analyzer-status))
-  :config
-  ;; uncomment for less flashiness
-  ;; (setq lsp-eldoc-hook nil)
-  ;; (setq lsp-enable-symbol-highlighting nil)
-  ;; (setq lsp-signature-auto-activate nil)
-
-  ;; comment to disable rustfmt on save
-  (setq rustic-format-on-save t)
-  (add-hook 'rustic-mode-hook 'mvh/rustic-mode-hook))
+  :config (setq lsp-eldoc-hook nil)
+          (setq lsp-enable-symbol-highlighting nil)
+          (setq lsp-signature-auto-activate nil)
+          (setq rustic-format-on-save nil)
+          (add-hook 'rustic-mode-hook 'mvh/rustic-mode-hook))
 
 (defun mvh/rustic-mode-hook ()
   ;; so that run C-c C-c C-r works without having to confirm, but

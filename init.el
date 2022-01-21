@@ -273,9 +273,8 @@
   :config (progn
             ;; Settings
             (setq-default flycheck-highlighting-mode 'lines
-                          flycheck-disabled-checkers '(emacs-lisp-checkdoc)
                           flycheck-check-syntax-automatically '(save)
-                          flycheck-disabled-checkers '(c/c++-clang c/c++-gcc))))
+                          flycheck-disabled-checkers '(c/c++-clang c/c++-gcc ruby))))
 
 (use-package yasnippet
   :ensure t

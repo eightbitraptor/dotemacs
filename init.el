@@ -370,7 +370,7 @@ If the comment doesn't exist, offer to insert it."
                       (lambda (arg)
                         (xref-push-marker-stack))))
 
-(use-package lsp-ui)'
+(use-package lsp-ui :ensure t)
 
 ;;; Language: Rust
 

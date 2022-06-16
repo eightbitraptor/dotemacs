@@ -470,6 +470,39 @@ If the comment doesn't exist, offer to insert it."
   ;;(unless (bound-and-true-p server-running-p)
   ;; (server-start))
 
+(use-package org-static-blog
+  :ensure t
+  :init
+  (setq org-static-blog-use-preview t
+        org-static-blog-preview-convert-titles t
+        org-static-blog-preview-ellipsis "..."
+        org-static-blog-enable-tags t
+        org-static-blog-publish-url "https://www.eightbitraptor.com/blog/"
+        org-static-blog-publish-title "eightbitraptor"
+        org-static-blog-posts-directory "~/src/org-blog/org"
+        org-static-blog-drafts-directory "~/src/org-blog/org/drafts/"
+        org-static-blog-publish-directory "~/src/org-blog/")
+
+  (setq org-static-blog-page-header
+        (concat
+         "<meta name=\"author\" content=\"eightbitraptor\">"
+         "<meta name=\"referrer\" content=\"no-referrer\">"
+         "<link href= \"/static/style.css\" rel=\"stylesheet\"
+                type=\"text/css\" />"
+         "<link rel=\"icon\" href=\"static/favicon.ico\">")
+
+        org-static-blog-page-preamble
+        (concat
+         "<div class=\"header\">"
+         "  <a href=\"https://www.eightbitraptor.com\">programming musings</a>"
+         "  <div class=\"sitelinks\">"
+         "    <a href=\"/blog/about.html\">about</a>"
+         "    | <a href=\"/blog/software.html\">software</a>"
+         "    | <a href=\"/blog/archive.html\">archive</a>"
+         "    | <a href=\"/blog/rss.xml\">rss</a>"
+         "  </div>"
+         "</div>")))
+
 ;; Startup Time - END
 (message "My .emacs loaded in %ds" (cl-destructuring-bind
                                        (hi lo ms psec)

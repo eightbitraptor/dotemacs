@@ -46,9 +46,13 @@
 ;;    :ensure t
 ;;    :config (feebleline-mode t))
 
-(use-package doom-themes
+;; (use-package doom-themes
+;;   :ensure t
+;;   :init (load-theme 'modus-operandi t))
+
+(use-package ample-theme
   :ensure t
-  :init (load-theme 'doom-outrun-electric t))
+  : init (load-theme 'ample-light t))
 
 (use-package nyan-mode
   :ensure t

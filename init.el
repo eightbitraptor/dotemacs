@@ -260,6 +260,10 @@
   :config (global-company-mode)
           (push 'company-robe company-backends))
 
+(use-package company-box
+  :ensure t
+  :hook (company-mode . company-box-mode))
+
 (setq vc-follow-symlinks t)
 (use-package magit
   :ensure t

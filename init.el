@@ -66,10 +66,10 @@
 (setq inhibit-startup-message t)
 (setq-default line-spacing 5)
 (global-display-line-numbers-mode t)
-(cond ((eq (window-system) 'x)  (set-face-attribute 'default nil :font "Liberation Mono 14"))
+(cond ((eq (window-system) 'x)  (set-face-attribute 'default nil :font "Jetbrains Mono 14"))
       ((eq (window-system) 'mac)
        (setq mac-frame-tabbing nil)
-       (set-face-attribute 'default nil :font "Consolas 16")))
+       (set-face-attribute 'default nil :font "Jetbrains Mono 16")))
 
 ;;; General editor behaviour
 

@@ -57,7 +57,7 @@
 (use-package nyan-mode
   :ensure t
   :init (nyan-mode))
-
+(setq visible-bell t)
 (setq-default cursor-type 'bar)
 (toggle-scroll-bar -1)
 (menu-bar-mode 0)

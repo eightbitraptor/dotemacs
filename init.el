@@ -97,11 +97,12 @@
      (global-unset-key "\C-x\C-z"))))
 
 (defun kill-other-buffers ()
-  "Kill all other buffers."
+  "Kill other buffers that are associated with files."
   (interactive)
   (mapc 'kill-buffer
         (delq (current-buffer)
-              (remove-if-not 'buffer-file-name (buffer-list)))))
+              (remove nil (mapcar #'(lambda (b) (when (buffer-file-name b) b))
+                                  (buffer-list))))))
 
 (defun open-line-above ()
   "Open a line above the line the point is at. Then move to that line and indent according to mode"

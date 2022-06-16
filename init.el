@@ -71,6 +71,8 @@
        (setq mac-frame-tabbing nil)
        (set-face-attribute 'default nil :font "Jetbrains Mono 16")))
 
+(setq native-comp-deferred-compilation t)
+
 ;;; General editor behaviour
 
 

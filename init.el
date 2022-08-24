@@ -1,9 +1,3 @@
-;;; Startup Time - START
-(defvar *emacs-load-start* (current-time))
-
-;;; Uncomment this in case of startup errors
-;;;(setq debug-on-error t)
-
 ;;; Package system
 
 (require 'package)
@@ -24,7 +18,9 @@
   (package-refresh-contents)
   (package-install 'use-package))
 
-(require 'use-package)
+(eval-when-compile
+  (require 'use-package))
+(require 'bind-key)
 
 ;;; Initialisation and Environment setup
 
@@ -42,17 +38,9 @@
 
 ;;; Themes and appearance
 
-;;(use-package feebleline
-;;    :ensure t
-;;    :config (feebleline-mode t))
-
-;; (use-package doom-themes
-;;   :ensure t
-;;   :init (load-theme 'modus-operandi t))
-
-(use-package ample-theme
+(use-package sakura-theme
   :ensure t
-  : init (load-theme 'ample-light t))
+  :init (load-theme 'sakura t))
 
 (use-package nyan-mode
   :ensure t
@@ -62,6 +50,7 @@
 (toggle-scroll-bar -1)
 (menu-bar-mode 0)
 (tool-bar-mode 0)
+
 (setq initial-scratch-message "")
 (setq inhibit-startup-message t)
 (setq-default line-spacing 5)
@@ -125,10 +114,8 @@
 (global-set-key (kbd "s-<return>") 'toggle-frame-fullscreen)
 
 (setq-default indent-tabs-mode nil)
-(electric-indent-mode -1)
 
 (setq-default c-basic-offset 4)
-
 (delete-selection-mode t)
 
 ;;; Navigation and Search
@@ -143,7 +130,6 @@
   :config (global-undo-tree-mode))
 
 (use-package ag :ensure t)
-(use-package counsel :ensure t)
 (use-package crux
     :ensure t
     :bind (("C-a" . crux-move-beginning-of-line)))
@@ -152,21 +138,10 @@
 
 (use-package ivy
   :ensure t
-  :init (setq ivy-use-virtual-buffers t)
-        (setq ivy-re-builders-alist
-              '((swiper . ivy--regex-plus)
-                (t      . ivy--regex-fuzzy)))
+  :init (setq ivy-use-virtual-buffers t
+              ivy-height 20)
         (ivy-mode 1)
-  :config (ivy-rich-mode 1)
-  :bind ;;("C-s"     . swiper)
-        ("M-x"     . counsel-M-x)
-        ("<f2> i"  . counsel-info-lookup-symbol)
-        ("C-c u "  . counsel-unicode-char)
-        ("C-c j"   . counsel-git-grep)
-        ("C-c k"   . counsel-ag))
-
-(use-package ivy-hydra
-  :ensure t)
+  :config (ivy-rich-mode 1))
 
 (use-package ivy-xref
   :ensure t
@@ -174,72 +149,15 @@
           (setq xref-show-definitions-function #'ivy-xref-show-defs))
   (setq xref-show-xrefs-function #'ivy-xref-show-xrefs))
 
-(use-package minimap
-  :ensure t
-  :config (setq minimap-window-location 'right)
-          (setq minimap-automatically-delete-window nil)
-  :bind ("C-c m" . minimap-mode))
-
-(use-package project-explorer
-  :ensure t
-  :bind ("C-c C-p" . project-explorer-toggle))
-
 (use-package imenu-list
   :ensure t
   :bind ("C-c C-t" . imenu-list-smart-toggle))
 
-(defun mvh-projectile-switch-project ()
-  "Load the environment from my local shell to capture env before finding a file."
-  (exec-path-from-shell-initialize)
-  (if (string= "shopify" (projectile-project-name))
-      (progn
-        (setq ivy-re-builders-alist
-              '((swiper . ivy--regex-plus)
-                (t      . ivy--regex-plus)))))
-  (projectile-find-file))
-
+;; Projectile spins trying to calculate what to write in the modeline when using TRAMP.
+;; forcing a static modeline causes tramp mode to get fast again
 (use-package projectile
   :ensure t
-  :config (setq projectile-switch-project-action 'mvh-projectile-switch-project)
-          (setq projectile-globally-ignored-directories
-                (append '(".buildkite"
-                          ".github"
-                          ".bundle"
-                          ".cache"
-                          ".dev"
-                          "tmp"
-                          "log"
-                          "*/images"
-                          "/app/assets") projectile-globally-ignored-directories))
-
-
-          (setq projectile-globally-ignored-files
-                (append '(".DS_Store"
-                          ".codecov.yml"
-                          ".byebug_history"
-                          ".image_optim.yml"
-                          ".rubocop-http---shopify-github-io-ruby-style-guide-rubocop-yml"
-                          ".rubocop.ci.yml"
-                          ".rubocop.yml"
-                          ".yardopts"
-                          ".yarnclean"
-                          ".eslintignore"
-                          ".projectile") projectile-globally-ignored-files))
-
-          (setq projectile-globally-ignored-file-suffixes
-                (append '(".svg"
-                          ".jpg"
-                          ".png"
-                          ".gif"
-                          ".pdf"
-                          ".woff"
-                          ".woff2"
-                          ".ttf"
-                          ".eot"
-                          ".js"
-                          ".coffee"
-                          ".zpl"
-                          ".scss") projectile-globally-ignored-file-suffixes))
+  :config (setq projectile-dynamic-mode-line nil)
           (projectile-global-mode)
   :bind-keymap ("C-c p" . projectile-command-map)
   :init (setq projectile-completion-system 'ivy))
@@ -251,15 +169,26 @@
 (when (fboundp 'windmove-default-keybindings)
   (windmove-default-keybindings))
 
-
 ;;; Code utilities (completion, whitespace management, Git etc)
+
+(use-package direnv
+  :ensure t
+  :init (direnv-mode))
+
+(use-package editorconfig
+  :ensure t
+  :init (editorconfig-mode 1))
+
+(use-package ws-butler
+  :ensure t
+  :init (setq ws-butler-keep-whitespace-before-point nil)
+  (ws-butler-global-mode))
 
 (use-package company
   :ensure t
   :init (setq company-dabbrev-downcase 0)
         (setq company-idle-delay 0)
-  :config (global-company-mode)
-          (push 'company-robe company-backends))
+  :config (global-company-mode))
 
 (use-package company-box
   :ensure t
@@ -272,30 +201,6 @@
         (setq magit-push-current-set-remote-if-missing nil)
   :bind ("C-c s" . magit-status))
 
-(use-package ws-butler
-  :ensure t
-  :init (setq ws-butler-keep-whitespace-before-point nil)
-  (ws-butler-global-mode))
-
-(use-package flycheck
-  :ensure t
-  :commands global-flycheck-mode
-  :init (add-hook 'prog-mode-hook 'global-flycheck-mode)
-  :config (progn
-            ;; Settings
-            (setq-default flycheck-highlighting-mode 'lines
-                          flycheck-check-syntax-automatically '(save)
-                          flycheck-disabled-checkers '(c/c++-clang c/c++-gcc ruby))))
-
-(use-package yasnippet
-  :ensure t
-  :config (setq yas-verbosity 1
-                yas-wrap-around-region t)
-          (with-eval-after-load 'yasnippet
-            (setq yas-snippet-dirs '(yasnippet-snippets-dir)))
-           (yas-reload-all)
-           (yas-global-mode))
-(use-package yasnippet-snippets :ensure t)
 
 ;;; Language: Ruby
 
@@ -309,7 +214,6 @@ If the comment doesn't exist, offer to insert it."
                      "# frozen_string_literal: true\n")
       (insert "# frozen_string_literal: true\n\n"))))
 
-(use-package robe :ensure t)
 (use-package rbenv
   :ensure t
   :init (global-rbenv-mode)
@@ -324,15 +228,12 @@ If the comment doesn't exist, offer to insert it."
         "\\.ru"
         "\\Rakefile"
         "\\.rake"
-  :hook robe-mode
-  :config (setq ruby-insert-encoding-magic-comment nil)
-          (setq enh-ruby-add-encoding-comment-on-save nil)
-          (setq enh-ruby-bounce-deep-indent t)
-          (setq enh-ruby-deep-indent-construct nil)
-          (setq flycheck-command-wrapper-function
-            (lambda (command)
-              (append '("bundle" "exec") command)))
-          (setq enh-ruby-hanging-brace-indent-level 2))
+  :config (setq ruby-insert-encoding-magic-comment nil
+                enh-ruby-add-encoding-comment-on-save nil
+                enh-ruby-bounce-deep-indent t
+                enh-ruby-deep-indent-construct nil
+                enh-ruby-hanging-brace-indent-level 2
+                case-fold-search t))
 
 ;;; Language: C
 
@@ -347,30 +248,18 @@ If the comment doesn't exist, offer to insert it."
 
 ;;; Language Server
 
+(setq lsp-client-packages '(lsp-ruby-syntax-tree lsp-clangd lsp-rust-analyzer))
+
 (use-package lsp-mode
   :ensure t
   :config (setq lsp-idle-delay 0.1
-                lsp-headerline-breadcrumb-enable nil
-                lsp-before-save-edits nil
-                lsp-enable-on-type-formatting nil
-                lsp-signature-auto-activate nil
-                lsp-signature-render-documentation nil
-                lsp-completion-enable-additional-text-edit nil
-                lsp-completion-show-detail 1
-                lsp-completion-show-kind 1
-                company-minimum-prefix-length 1
                 lsp-rust-analyzer-cargo-watch-command "clippy"
-                lsp-eldoc-render-all nil
-                lsp-lens-enable nil
-                lsp-ui-doc-enable nil
-                lsp-idle-delay 0.6
                 lsp-rust-analyzer-server-display-inlay-hints t)
           (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
   :hook ((c-mode . lsp)
          (c++-mode . lsp)
          (rustic-mode . lsp)
          (enh-ruby-mode . lsp))
-  :init (yas-global-mode)
   :after (which-key)
   :bind-keymap ("M-l" . lsp-command-map))
 
@@ -381,24 +270,27 @@ If the comment doesn't exist, offer to insert it."
                       (lambda (arg)
                         (xref-push-marker-stack))))
 
-(use-package lsp-ui :ensure t)
+(use-package lsp-ui
+  :ensure t
+  :bind (("C-c ?" . 'lsp-ui-peek-find-references)
+         ("M-." . 'lsp-ui-peek-find-definitions)))
+
+(use-package lsp-treemacs
+  :ensure t
+  :init (lsp-treemacs-sync-mode 1))
 
 ;;; Language: Rust
 
 (use-package rustic
   :ensure
   :bind (:map rustic-mode-map
-              ("M-?" . lsp-find-references)
-              ("C-c C-c l" . flycheck-list-errors)
               ("C-c C-c a" . lsp-execute-code-action)
               ("C-c C-c r" . lsp-rename)
-              ("C-c C-c q" . lsp-workspace-restart)
-              ("C-c C-c Q" . lsp-workspace-shutdown)
               ("C-c C-c s" . lsp-rust-analyzer-status))
-  :config (setq lsp-eldoc-hook nil)
-          (setq lsp-enable-symbol-highlighting nil)
-          (setq lsp-signature-auto-activate nil)
-          (setq rustic-format-on-save nil)
+  :config (setq lsp-eldoc-hook nil
+                lsp-enable-symbol-highlighting nil
+                lsp-signature-auto-activate nil
+                rustic-format-on-save nil)
           (add-hook 'rustic-mode-hook 'mvh/rustic-mode-hook))
 
 (defun mvh/rustic-mode-hook ()
@@ -420,9 +312,9 @@ If the comment doesn't exist, offer to insert it."
         "\\.css"
         "\\.scss"
         "\\.sass"
-  :init (setq web-mode-markup-indent-offset 2)
-        (setq web-mode-css-indent-offset 2)
-        (setq web-mode-code-indent-offset 2)
+  :init (setq web-mode-markup-indent-offset 4)
+        (setq web-mode-css-indent-offset 4)
+        (setq web-mode-code-indent-offset 4)
         (setq web-mode-content-types-alist '(("jsx" . "\\.js[x]?\\'")))
         (setq web-mode-enable-auto-indentation nil))
 
@@ -467,10 +359,6 @@ If the comment doesn't exist, offer to insert it."
           (org-journal-file-format "%Y%m%d")
           (org-journal-date-format "%A %d %b %Y"))
 
-  ;; Server
-  ;;(unless (bound-and-true-p server-running-p)
-  ;; (server-start))
-
 (use-package org-static-blog
   :ensure t
   :init
@@ -478,9 +366,9 @@ If the comment doesn't exist, offer to insert it."
         org-static-blog-preview-convert-titles t
         org-static-blog-preview-ellipsis "..."
         org-static-blog-enable-tags t
-        org-static-blog-publish-url "https://www.eightbitraptor.com/blog/"
-        org-static-blog-publish-title "eightbitraptor"
-        org-static-blog-posts-directory "~/src/org-blog/org"
+        org-static-blog-publish-url "http://localhost:9090/"
+        org-static-blog-publish-title "eightbitraptor.com"
+        org-static-blog-posts-directory "~/src/org-blog/org/posts"
         org-static-blog-drafts-directory "~/src/org-blog/org/drafts/"
         org-static-blog-publish-directory "~/src/org-blog/")
 
@@ -495,7 +383,7 @@ If the comment doesn't exist, offer to insert it."
         org-static-blog-page-preamble
         (concat
          "<div class=\"header\">"
-         "  <a href=\"https://www.eightbitraptor.com\">programming musings</a>"
+         "  <a href=\"https://www.eightbitraptor.com\">eightbitraptor.com</a>"
          "  <div class=\"sitelinks\">"
          "    <a href=\"/blog/about.html\">about</a>"
          "    | <a href=\"/blog/software.html\">software</a>"
@@ -503,11 +391,3 @@ If the comment doesn't exist, offer to insert it."
          "    | <a href=\"/blog/rss.xml\">rss</a>"
          "  </div>"
          "</div>")))
-
-;; Startup Time - END
-(message "My .emacs loaded in %ds" (cl-destructuring-bind
-                                       (hi lo ms psec)
-                                       (current-time)
-                                     (- (+ hi lo)
-                                        (+ (cl-first *emacs-load-start*)
-                                           (cl-second *emacs-load-start*)))))

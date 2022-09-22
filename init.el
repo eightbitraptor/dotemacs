@@ -248,11 +248,12 @@ If the comment doesn't exist, offer to insert it."
 
 ;;; Language Server
 
-(setq lsp-client-packages '(lsp-ruby-syntax-tree lsp-clangd lsp-rust-analyzer))
+(setq lsp-client-packages '(lsp-solargraph lsp-clangd lsp-rust-analyzer))
 
 (use-package lsp-mode
   :ensure t
   :config (setq lsp-idle-delay 0.1
+                lsp-headerline-breadcrumb-enable nil
                 lsp-rust-analyzer-cargo-watch-command "clippy"
                 lsp-rust-analyzer-server-display-inlay-hints t)
           (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)

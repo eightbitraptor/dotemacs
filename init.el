@@ -38,9 +38,9 @@
 
 ;;; Themes and appearance
 
-(use-package sakura-theme
+(use-package night-owl-theme
   :ensure t
-  :init (load-theme 'sakura t))
+  :init (load-theme 'night-owl t))
 
 (use-package nyan-mode
   :ensure t
@@ -58,7 +58,7 @@
 (cond ((eq (window-system) 'x)  (set-face-attribute 'default nil :font "Jetbrains Mono 16"))
       ((eq (window-system) 'mac)
        (setq mac-frame-tabbing nil)
-       (set-face-attribute 'default nil :font "Consolas 18")))
+       (set-face-attribute 'default nil :font "Consolas 20")))
 
 (setq native-comp-deferred-compilation t)
 

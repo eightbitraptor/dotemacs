@@ -103,6 +103,25 @@
   (indent-according-to-mode))
 (global-set-key (kbd "C-o") 'open-line-above)
 
+(defun my-alter-frame-font-size (fn)
+  (let* ((current-font-name (frame-parameter nil 'font))
+         (decomposed-font-name (x-decompose-font-name current-font-name))
+         (font-size (string-to-number (aref decomposed-font-name 5))))
+    (aset decomposed-font-name 5 (number-to-string (funcall fn font-size)))
+    (set-frame-font (x-compose-font-name decomposed-font-name))))
+
+(defun my-inc-frame-font-size ()
+  (interactive)
+  (my-alter-frame-font-size '1+))
+
+(defun my-dec-frame-font-size ()
+  (interactive)
+  (my-alter-frame-font-size '1-))
+
+(global-set-key (kbd "C-+") 'my-inc-frame-font-size)
+(global-set-key (kbd "C-=") 'my-inc-frame-font-size)
+(global-set-key (kbd "C--") 'my-dec-frame-font-size)
+
 (global-set-key "\C-x\C-m" 'execute-extended-command)
 (global-set-key "\C-c\C-m" 'execute-extended-command)
 

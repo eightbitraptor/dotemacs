@@ -325,8 +325,14 @@ If the comment doesn't exist, offer to insert it."
 
 (use-package lsp-ui
   :ensure t
-  :bind (("C-c ?" . 'lsp-ui-peek-find-references)
-         ("M-." . 'lsp-ui-peek-find-definitions)))
+  :config (setq lsp-ui-sideline-mode nil
+                lsp-ui-flycheck-live-reporting nil
+                lsp-ui-sideline-enable nil
+                lsp-ui-sideline-show-diagnostics nil)
+  :bind (:map
+         lsp-ui-mode-map
+         ([remap xref-find-definitions] . #'lsp-ui-peek-find-definitions)
+         ([remap xref-find-references] . #'lsp-ui-peek-find-references)))
 
 (use-package lsp-treemacs
   :ensure t

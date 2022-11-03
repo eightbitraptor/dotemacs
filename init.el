@@ -280,6 +280,7 @@ If the comment doesn't exist, offer to insert it."
         "\\.ru"
         "\\Rakefile"
         "\\.rake"
+  :hook (ruby-mode . subword-mode)
   :config (setq ruby-insert-encoding-magic-comment nil
                 enh-ruby-add-encoding-comment-on-save nil
                 enh-ruby-bounce-deep-indent t

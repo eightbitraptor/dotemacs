@@ -2,13 +2,13 @@
 
 (require 'package)
 (package-initialize)
-(setq package-enable-at-startup nil)
-(setq package-archives '(("melpa"        . "https://melpa.org/packages/")
+
+(setq package-enable-at-startup nil
+      package-archives '(("melpa"        . "https://melpa.org/packages/")
                          ("melpa-stable" . "https://stable.melpa.org/packages/")
                          ("gnu"          . "https://elpa.gnu.org/packages/")
-                         ("org"          . "https://orgmode.org/elpa/")))
-
-(setq package-archive-priorities '(("melpa"        . 30)
+                         ("org"          . "https://orgmode.org/elpa/"))
+      package-archive-priorities '(("melpa"        . 30)
                                    ("melpa-stable" . 20)
                                    ("org"          . 10)
                                    ("gnu"          . 0)))

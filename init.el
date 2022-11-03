@@ -192,11 +192,6 @@
     :bind (("C-a" . crux-move-beginning-of-line)))
 (use-package flx :ensure t)
 (use-package ivy-rich :ensure t)
-(use-package ivy-posframe
-  :ensure t
-  :config (setq ivy-posframe-parameters '((left-fringe . 16)
-                                          (right-fringe . 16)))
-  :init (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display))))
 
 (use-package ivy
   :ensure t
@@ -206,10 +201,7 @@
                                                  (execute-extended-command . ivy--shorter-matches-first)
                                                  (ivy-switch-buffer . ivy-sort-function-buffer)))
         (ivy-mode 1)
-        (ivy-posframe-mode 1)
-        (ivy-rich-mode 1))''
-
-
+        (ivy-rich-mode 1))
 
 (use-package ivy-xref
   :ensure t

@@ -307,6 +307,12 @@ If the comment doesn't exist, offer to insert it."
   :ensure t
   :config (setq lsp-idle-delay 0.1
                 lsp-headerline-breadcrumb-enable nil
+                lsp-enable-on-type-formatting nil
+                lsp-enable-indentation nil
+                lsp-solargraph-formatting nil
+                lsp-solargraph-diagnostics nil
+                lsp-diagnostics-provider nil
+                lsp-solargraph-hover nil
                 lsp-rust-analyzer-cargo-watch-command "clippy"
                 lsp-rust-analyzer-server-display-inlay-hints t)
           (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)

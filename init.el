@@ -318,8 +318,7 @@ If the comment doesn't exist, offer to insert it."
           (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
   :hook ((c-mode . lsp)
          (c++-mode . lsp)
-         (rustic-mode . lsp)
-         (enh-ruby-mode . lsp))
+         (rustic-mode . lsp))
   :after (which-key)
   :bind-keymap ("M-l" . lsp-command-map))
 

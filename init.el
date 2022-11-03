@@ -38,13 +38,18 @@
 
 ;;; Themes and appearance
 
-(use-package night-owl-theme
+(use-package doom-themes
   :ensure t
-  :init (load-theme 'night-owl t))
+  :init (load-theme 'doom-wilmersdorf t))
 
 (use-package nyan-mode
   :ensure t
   :init (nyan-mode))
+
+(use-package solaire-mode
+  :ensure t
+  :init (solaire-global-mode 1))
+
 (setq visible-bell t)
 (setq-default cursor-type 'bar)
 (toggle-scroll-bar -1)
@@ -187,13 +192,24 @@
     :bind (("C-a" . crux-move-beginning-of-line)))
 (use-package flx :ensure t)
 (use-package ivy-rich :ensure t)
+(use-package ivy-posframe
+  :ensure t
+  :config (setq ivy-posframe-parameters '((left-fringe . 16)
+                                          (right-fringe . 16)))
+  :init (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display))))
 
 (use-package ivy
   :ensure t
   :init (setq ivy-use-virtual-buffers t
-              ivy-height 20)
+              ivy-sort-matches-functions-alist '((t . nil)
+                                                 (ivy-completion-in-region . ivy--shorter-matches-first)
+                                                 (execute-extended-command . ivy--shorter-matches-first)
+                                                 (ivy-switch-buffer . ivy-sort-function-buffer)))
         (ivy-mode 1)
-  :config (ivy-rich-mode 1))
+        (ivy-posframe-mode 1)
+        (ivy-rich-mode 1))''
+
+
 
 (use-package ivy-xref
   :ensure t

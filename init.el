@@ -418,7 +418,7 @@ If the comment doesn't exist, offer to insert it."
 
 
 ;;; Org Mode
-
+(add-hook 'text-mode-hook 'turn-on-auto-fill)
 (use-package htmlize :ensure t)
 (use-package org
   :ensure t

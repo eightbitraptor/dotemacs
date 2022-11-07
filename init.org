@@ -558,28 +558,49 @@ This relies on the following things:
   IP. My network is small so I just use an entry in /etc/hosts for
   this.
 
+MPC mode has a really weird UI. It _looks_ like it should behave like
+a "normal" music player, it has selection windows for genre, artist,
+album etc. But there doesn't seem to be any built in ways to
+manipulate the main playlist in MPD beyond the standard mpc-add.
+
+So there are a few helper functions in here that help to add groups of
+stuff to the playlist, as well as remove things and clear down the
+playlist. All features I use from ncmpcpp all the time.
+
+I usually listen to Albums, so my workflow looks a bit like this:
+
+- browse for the album I want
+- press a to append it to the playlist
+- press p to start playing (this toggles play/pause states)
+- continue to add more albums as and when I feel like it.
+- when I want a change, hit S to stop playing and clear the current
+  playlist
+
+  Soon I'll discover a simple way of selectively removing stuff from
+  the playlist but I'm not quite there yet.
+
 #+BEGIN_SRC emacs-lisp
   (use-package mpc
     :init
     (defun ebr/mpc-unselect-all (&optional event)
-            "Unselect all selected songs in the current mpc buffer."
-            (interactive)
-            (save-excursion
-              (goto-char (point-min))
-              (while (not (eobp))
-                (cond
-                 ((get-char-property (point) 'mpc-select)
-                  (let ((ols nil))
-                    (dolist (ol mpc-select)
-                      (if (and (<= (overlay-start ol) (point))
-                               (> (overlay-end ol) (point)))
-                          (delete-overlay ol)
-                        (push ol ols)))
-                    (cl-assert (= (1+ (length ols)) (length mpc-select)))
-                    (setq mpc-select ols)))
-                 ((mpc-tagbrowser-all-p) nil)
-                 (t nil))
-                (forward-line 1))))
+      "Unselect all selected songs in the current mpc buffer."
+      (interactive)
+      (save-excursion
+        (goto-char (point-min))
+        (while (not (eobp))
+          (cond
+           ((get-char-property (point) 'mpc-select)
+            (let ((ols nil))
+              (dolist (ol mpc-select)
+                (if (and (<= (overlay-start ol) (point))
+                         (> (overlay-end ol) (point)))
+                    (delete-overlay ol)
+                  (push ol ols)))
+              (cl-assert (= (1+ (length ols)) (length mpc-select)))
+              (setq mpc-select ols)))
+           ((mpc-tagbrowser-all-p) nil)
+           (t nil))
+          (forward-line 1))))
     (defun ebr/mpc-add-selected ()
       "Append to playlist, then unmark the song."
       (interactive)
@@ -593,17 +614,16 @@ This relies on the following things:
       (ebr/mpc-unselect-all))
     :custom
     (mpc-host "senjougahara")
-    (mpc-songs-format "%2{Disc--}%3{Track} %-4{Time} %28{Title} %18{Album} %18{Artist} %5{Date}")
+    (mpc-songs-format "%2{Disc--}%3{Track} %28{Title} %18{Album} %18{Artist}")
+    (mpc-browser-tags '(Artist Album))
     (mpc-cover-image-re "[Ff]older.jpg")
     :bind (:map mpc-mode-map
                 ("a" . ebr/mpc-add-at-point-and-unmark)
                 ("A" . ebr/mpc-add-selected)
                 ("c" . ebr/mpc-unselect-all)
+                ("d" . mpc-playlist-delete)
+                ("p" . mpc-toggle-play)
+                ("P" . mpc-playlist)
                 ("s" . mpc-select)
-                ("S" . mpc-select-extend)
-                ("f" . mpc-next)
-                ("b" . mpc-prev)
-                ("C" . mpc-playlist-clear)
-                ("p" . mpc-playlist)))
-
+                ("S" . mpc-stop)))
 #+END_SRC

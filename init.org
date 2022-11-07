@@ -45,7 +45,7 @@
   (setq native-comp-deferred-compilation t)
 
   ;;; General editor behaviour
-
+  (add-hook 'text-mode-hook 'turn-on-auto-fill)
 
   (let ((mvh-customisations-file "~/.emacs.d/customisations.el"))
     (unless (file-exists-p mvh-customisations-file)
@@ -399,9 +399,18 @@
           (setq web-mode-code-indent-offset 4)
           (setq web-mode-content-types-alist '(("jsx" . "\\.js[x]?\\'")))
           (setq web-mode-enable-auto-indentation nil))
+#+END_SRC
 
+** Markup languages
 
-  ;;; Language: Toml/Yaml/Markdown
+Import the packages and associate the right file types required to
+write content in Markdown, Toml and Yaml.
+
+I also configure a default stylesheet here for previewing Markdown
+documents in HTML. Leaving everything up to the browser really doesn't
+do our documents any favours.
+
+#+BEGIN_SRC emacs-lisp
 
   (setq markdown-preview-stylesheets
         (list "http://thomasf.github.io/solarized-css/solarized-light.min.css"))
@@ -417,9 +426,27 @@
     :mode "\\.md"
           "\\.markdown")
 
+#+END_SRC
 
+** Org Mode for journalling and publishing
+
+The org mode package has already been installed from the package repos
+in the early-init file, so that we could use the latest version to
+tangle this file into the standard init file init.el.
+
+Org mode is then specified again here, so that we can define some more
+thorough initialisation on the package and set some custom variables.
+
+The main ones defined here are the shift hooks. Setting these to the
+windmove functions, means that org-mode window switching behaviour is
+much more consistent with the rest of my emacs, which also has
+windmove enabled.
+
+Now I can move windows with shift+arrows no matter the buffer type
+
+#+BEGIN_SRC emacs-lisp
   ;;; Org Mode
-  (add-hook 'text-mode-hook 'turn-on-auto-fill)
+
   (use-package htmlize :ensure t)
   (use-package org
     :config (setq org-startup-truncated 1)
@@ -429,13 +456,31 @@
             (add-hook 'org-shiftright-final-hook 'windmove-right)
             (org-babel-do-load-languages 'org-babel-load-languages '((ruby . t)))
     :mode ("\\.org" . org-mode))
+#+END_SRC
 
+I also use org-journal to document my days. It's configured to start a
+new journal file per day in a folder in my home directory.
+
+Each new entry in the same day gets a new timestamped org mode heading
+in that file.
+
+#+BEGIN_SRC emacs-lisp
   (use-package org-journal
     :init (setq org-journal-prefix-key "C-c j ")
     :custom (org-journal-dir "~/Documents/log_books/")
             (org-journal-file-format "%Y%m%d")
             (org-journal-date-format "%A %d %b %Y"))
+#+END_SRC
 
+The following section is an experiment to see whether I can configure
+and live with a staticly generated blog/website entirely done within
+Emacs.
+
+Currently my homepage uses Hugo and the process required to push a new
+post has a high enough barrier to entry that I forget it every time,
+and it makes me want to post less.
+
+#+BEGIN_SRC
   (use-package org-static-blog
     :init
     (setq org-static-blog-use-preview t
@@ -498,7 +543,22 @@
            :publishing-function org-publish-attachment)
           ("eightbitraptor" :components ("orgfiles" "images" "other"))))
 
-  ;;; MPC Mode
+#+END_SRC
+
+** Music with MPC and MPD
+
+Here we configure the built-in mpc-mode to connect to a running Mopidy
+server on my home network desktop machine "senjougahara".
+
+This relies on the following things:
+
+- Mopidy is running with the MPD plugin on a host, using the default
+  Mopidy port
+- There is some way of mapping the hostname "senjougahara" to an
+  IP. My network is small so I just use an entry in /etc/hosts for
+  this.
+
+#+BEGIN_SRC emacs-lisp
   (use-package mpc
     :init
     (defun ebr/mpc-unselect-all (&optional event)
@@ -539,6 +599,10 @@
                 ("a" . ebr/mpc-add-at-point-and-unmark)
                 ("A" . ebr/mpc-add-selected)
                 ("c" . ebr/mpc-unselect-all)
+                ("s" . mpc-select)
+                ("S" . mpc-select-extend)
+                ("f" . mpc-next)
+                ("b" . mpc-prev)
                 ("C" . mpc-playlist-clear)
                 ("p" . mpc-playlist)))
 

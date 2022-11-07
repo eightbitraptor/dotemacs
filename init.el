@@ -525,6 +525,37 @@ If the comment doesn't exist, offer to insert it."
          "    | <a href=\"/blog/rss.xml\">rss</a>"
          "  </div>"
          "</div>")))
+
+;; Customize the HTML output
+(setq org-html-validation-link nil
+      org-html-head-include-scripts nil
+      org-html-head-include-default-style nil
+      org-html-head "<link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.simplecss.org/simple.min.css\" />")
+
+(setq org-publish-project-alist
+      '(("orgfiles"
+         :base-directory "~/org/"
+         :base-extension "org"
+         :publishing-directory "~/org/html"
+         :publishing-function org-html-publish-to-html
+         :headline-levels 3
+         :section-numbers t
+         :with-toc t
+         :html-preamble t)
+
+        ("images"
+         :base-directory "~/org/images/"
+         :base-extension "jpg\\|gif\\|png"
+         :publishing-directory "~/org/html/images/"
+         :publishing-function org-publish-attachment)
+
+        ("other"
+         :base-directory "~/org/other/"
+         :base-extension "css\\|el"
+         :publishing-directory "~/org/html/other/"
+         :publishing-function org-publish-attachment)
+        ("eightbitraptor" :components ("orgfiles" "images" "other"))))
+
 ;;; MPC Mode
 (use-package mpc
   :ensure t

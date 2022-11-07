@@ -525,3 +525,47 @@ If the comment doesn't exist, offer to insert it."
          "    | <a href=\"/blog/rss.xml\">rss</a>"
          "  </div>"
          "</div>")))
+;;; MPC Mode
+(use-package mpc
+  :ensure t
+  :init
+  (defun ebr/mpc-unselect-all (&optional event)
+          "Unselect all selected songs in the current mpc buffer."
+          (interactive)
+          (save-excursion
+            (goto-char (point-min))
+            (while (not (eobp))
+              (cond
+               ((get-char-property (point) 'mpc-select)
+                (let ((ols nil))
+                  (dolist (ol mpc-select)
+                    (if (and (<= (overlay-start ol) (point))
+                             (> (overlay-end ol) (point)))
+                        (delete-overlay ol)
+                      (push ol ols)))
+                  (cl-assert (= (1+ (length ols)) (length mpc-select)))
+                  (setq mpc-select ols)))
+               ((mpc-tagbrowser-all-p) nil)
+               (t nil))
+              (forward-line 1))))
+  (defun ebr/mpc-add-selected ()
+    "Append to playlist, then unmark the song."
+    (interactive)
+    (mpc-playlist-add)
+    (ebr/mpc-unselect-all))
+  (defun ebr/mpc-add-at-point-and-unmark ()
+    "Mark, append to playlist, then unmark the song."
+    (interactive)
+    (mpc-select-toggle)
+    (mpc-playlist-add)
+    (ebr/mpc-unselect-all))
+  :custom
+  (mpc-host "senjougahara")
+  (mpc-songs-format "%2{Disc--}%3{Track} %-4{Time} %28{Title} %18{Album} %18{Artist} %5{Date}")
+  (mpc-cover-image-re "[Ff]older.jpg")
+  :bind (:map mpc-mode-map
+              ("a" . ebr/mpc-add-at-point-and-unmark)
+              ("A" . ebr/mpc-add-selected)
+              ("c" . ebr/mpc-unselect-all)
+              ("C" . mpc-playlist-clear)
+              ("p" . mpc-playlist)))

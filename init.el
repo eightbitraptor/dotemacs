@@ -361,6 +361,54 @@ If the comment doesn't exist, offer to insert it."
          ([remap xref-find-definitions] . #'lsp-ui-peek-find-definitions)
          ([remap xref-find-references] . #'lsp-ui-peek-find-references)))
 
+(use-package treemacs
+  :ensure t
+  :defer t
+  :init (with-eval-after-load 'winum
+          (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
+  :config (progn
+            (setq treemacs-litter-directories '("/node_modules" "/.venv" "/.cask"))
+            (treemacs-follow-mode t)
+            (treemacs-filewatch-mode t)
+            (treemacs-fringe-indicator-mode 'always)
+            (when treemacs-python-executable
+              (treemacs-git-commit-diff-mode t))
+
+            (pcase (cons (not (null (executable-find "git")))
+                         (not (null treemacs-python-executable)))
+              (`(t . t)
+               (treemacs-git-mode 'deferred))
+              (`(t . _)
+               (treemacs-git-mode 'simple)))
+
+            (treemacs-hide-gitignored-files-mode nil))
+  :bind (:map global-map
+              ("M-0"       . treemacs-select-window)
+              ("C-x t 1"   . treemacs-delete-other-windows)
+              ("C-x t t"   . treemacs)
+              ("C-x t d"   . treemacs-select-directory)
+              ("C-x t B"   . treemacs-bookmark)
+              ("C-x t C-t" . treemacs-find-file)
+              ("C-x t M-t" . treemacs-find-tag)))
+
+(use-package treemacs-projectile
+  :after (treemacs projectile)
+  :ensure t)
+
+(use-package treemacs-magit
+  :after (treemacs magit)
+  :ensure t)
+
+(use-package treemacs-persp ;;treemacs-perspective if you use perspective.el vs. persp-mode
+  :after (treemacs persp-mode) ;;or perspective vs. persp-mode
+  :ensure t
+  :config (treemacs-set-scope-type 'Perspectives))
+
+(use-package treemacs-tab-bar ;;treemacs-tab-bar if you use tab-bar-mode
+  :after (treemacs)
+  :ensure t
+  :config (treemacs-set-scope-type 'Tabs))
+
 (use-package lsp-treemacs
   :ensure t
   :init (lsp-treemacs-sync-mode 1))

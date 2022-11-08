@@ -2,9 +2,59 @@
 #+AUTHOR Matthew Valentine-House
 #+STARTUP overview
 
-#+BEGIN_SRC emacs-lisp
-  ;;; Initialisation and Environment setup
+* Emacs config - eightbitraptor
 
+This is the latest incarnation of my emacs config. It's been built up,
+torn down, refactored and rebuilt many times since I started using
+Emacs (the earliest reference I can find is a really ugly screenshot
+of my work Mac circa 2011 - a long time before I knew remotely what I
+was doing :|).
+
+** Pre-initialisation (early-init.el)
+
+This configuration uses straight.el as a package manager and org babel
+to document the configuration. Alongside this file there is also an
+early-init.el which Emacs will run before setting up the GUI and
+before loading any other init files.
+
+The early-init in this repo does a couple of things:
+
+1. Uses straight.el for packaging. That is:
+   - install the latest version of straight.el if it's not already
+     installed
+   - disable the built in package.el
+   - install use-package and configure it to use straight.el by
+     default
+2. Install the latest version of org-mode, with no config, just to be
+   able to tangle this file.
+
+I install the latest version of org-mode in the early init, to avoid
+any compatability problems later on when using straight.el to properly
+configure org and some dependencies that I like to use.
+
+*** Notes for initial setup
+
+You should be able to clone this repo straight into ~/.emacs.d and
+start Emacs and everything will be setup and configured on first
+start. Although note that due to a lot of work being done in
+early-init.el (including loading this file) the first startup will be
+very slow as all the packages are git cloned from their various
+repositories, but also that _the UI will not be running_
+
+This may make it look like it didn't work, but check in htop/Task
+Manager/whatever and you should see the process active and doing stuff
+and eventually Emacs will appear. This will only happen on first boot.
+
+I appreciate the UX for this is shit. But it only happens once per
+machine, and well; It doesn't really bother me enough to fix it.
+
+** Setting up the PATH
+
+I like to make sure that Emacs is using the same PATH and Ruby paths
+as my shell for consistency. This is important on macOS where
+processes are started with a different environment.
+
+#+BEGIN_SRC emacs-lisp
   (use-package exec-path-from-shell
     :if (memq window-system '(mac ns x))
     :init (setq exec-path-from-shell-variables '("PATH"
@@ -13,45 +63,95 @@
                                                  "GEM_PATH"))
           (setq exec-path-from-shell-check-startup-files nil)
           (exec-path-from-shell-initialize))
+#+END_SRC
 
+#+BEGIN_SRC emacs-lisp
   (use-package no-littering :ensure t)
+#+END_SRC
 
-  ;;; Themes and appearance
+** Aesthetics
 
-  (use-package doom-themes
-    :init (load-theme 'doom-wilmersdorf t))
+I like my editor to be nice to look at. So let's set up a few
+frivolous things. First a nice theme
 
+#+BEGIN_SRC
+  (use-package nord-theme
+    :init (load-theme 'nord t))
+#+END_SRC
+
+Then nyan cat as a progress bar in my modeline
+
+#+BEGIN_SRC emacs-lisp
   (use-package nyan-mode
     :init (nyan-mode))
+#+END_SRC
 
+Then solaire mode, which darkens windows that aren't directly
+connected to an editor buffer. Think how VSCode has different coloured
+backgrounds for the editor window and the filelist and you'll get the
+idea.
+
+#+BEGIN_SRC emacs-lisp
   (use-package solaire-mode
     :init (solaire-global-mode 1))
+#+END_SRC
 
-  (setq visible-bell t)
+Silence the audible bell, and make the visual bell quite a bit more
+subtle - just flash the text on the modeline white briefly, rather
+than flashing the whole window.
+
+#+BEGIN_SRC emacs-lisp
+  (setq ring-bell-function
+      (lambda ()
+        (let ((orig-fg (face-foreground 'mode-line)))
+          (set-face-foreground 'mode-line "#FFFFFF")
+          (run-with-idle-timer 0.1 nil
+                               (lambda (fg) (set-face-foreground 'mode-line fg))
+                               orig-fg))))
+#+END_SRC
+
+I like the cursor to be an I-beam, and I like to disable all the
+toolbars and scrollbars for a pretty clean looking frame.
+
+#+BEGIN_SRC emacs-lisp
   (setq-default cursor-type 'bar)
   (toggle-scroll-bar -1)
   (menu-bar-mode 0)
   (tool-bar-mode 0)
+#+END_SRC
 
+Don't display text in the startup buffer or the scratch buffer by default
+
+#+BEGIN_SRC emacs-lisp
   (setq initial-scratch-message "")
   (setq inhibit-startup-message t)
+#+END_SRC
+
+Increase the line spacing a little from the default and turn on line
+numbers globally.
+
+#+BEGIN_SRC emacs-lisp
   (setq-default line-spacing 5)
   (global-display-line-numbers-mode t)
-  (cond ((eq (window-system) 'x)  (set-face-attribute 'default nil :font "Jetbrains Mono 16"))
+#+END_SRC
+
+Now we'll configure the default fonts. We have to do this per OS
+because everything renders fonts differently and at different sizes.
+
+#+BEGIN_SRC emacs-lisp
+  (cond ((eq (window-system) 'x)
+         (set-face-attribute 'default nil :font "Jetbrains Mono 16"))
         ((eq (window-system) 'mac)
          (setq mac-frame-tabbing nil)
-         (set-face-attribute 'default nil :font "Consolas 20")))
+         (set-face-attribute 'default nil :font "Jetbrains Mono 18"))
+        ((eq (window-system) 'w32)
+         (set-face-attribute 'default nil :font "Consolas 16")))
+#+END_SRC
 
-  (setq native-comp-deferred-compilation t)
+** General Editor defaults
 
-  ;;; General editor behaviour
+#+BEGIN_SRC emacs-lisp
   (add-hook 'text-mode-hook 'turn-on-auto-fill)
-
-  (let ((mvh-customisations-file "~/.emacs.d/customisations.el"))
-    (unless (file-exists-p mvh-customisations-file)
-      (write-region "" nil mvh-customisations-file))
-    (setq custom-file mvh-customisations-file)
-    (load custom-file))
 
   (setq auto-save-default nil)
   (setq backup-directory-alist

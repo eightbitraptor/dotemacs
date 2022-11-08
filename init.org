@@ -80,7 +80,7 @@ just dump directly into .emacs.d
 I like my editor to be nice to look at. So let's set up a few
 frivolous things. First a nice theme
 
-#+BEGIN_SRC
+#+BEGIN_SRC emacs-lisp
   (use-package nord-theme
     :init (load-theme 'nord t))
 #+END_SRC

@@ -158,7 +158,7 @@ everything renders fonts differently and at different sizes.
 ** General Editor Settings
 
 Break all long lines automatically at ~fill-column~ so I don't have to press
-~M-q~ all the time. And then set ~fill-column~ to 80 chars, because 70 is
+~M-q~ all the time. And then set ~fill-column~ to 80 chars, because 70 is a bit short.
 
 #+BEGIN_SRC emacs-lisp
   (add-hook 'text-mode-hook 'turn-on-auto-fill)
@@ -663,11 +663,11 @@ Now I can move windows with shift+arrows no matter the buffer type
     :mode ("\\.org" . org-mode))
 #+END_SRC
 
-I also use org-journal to document my days. It's configured to start a
-new journal file per day in a folder in my home directory.
+I also use org-journal to document my days. It's configured to start a new
+journal file per day in a folder in my home directory.
 
-Each new entry in the same day gets a new timestamped org mode heading
-in that file.
+Each new entry in the same day gets a new timestamped org mode heading in that
+file.
 
 #+BEGIN_SRC emacs-lisp
   (use-package org-journal

@@ -656,7 +656,10 @@ Now I can move windows with shift+arrows no matter the buffer type
             (add-hook 'org-shiftleft-final-hook 'windmove-left)
             (add-hook 'org-shiftdown-final-hook 'windmove-down)
             (add-hook 'org-shiftright-final-hook 'windmove-right)
-            (org-babel-do-load-languages 'org-babel-load-languages '((ruby . t)))
+
+            (org-babel-do-load-languages 'org-babel-load-languages '((ruby . t)
+                                                                     (emacs-lisp . t)
+                                                                     (C . t)))
     :mode ("\\.org" . org-mode))
 #+END_SRC
 

@@ -51,7 +51,7 @@ I like to make sure that Emacs is using the same PATH and Ruby paths as my shell
 for consistency. This is important on macOS where processes are started with a
 different environment.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (use-package exec-path-from-shell
     :if (memq window-system '(mac ns x))
     :init (setq exec-path-from-shell-variables '("PATH"
@@ -60,7 +60,7 @@ different environment.
                                                  "GEM_PATH"))
           (setq exec-path-from-shell-check-startup-files nil)
           (exec-path-from-shell-initialize))
-#+END_SRC
+#+end_src
 
 ** No littering
 
@@ -68,9 +68,9 @@ No littering makes etc and var directories inside .emacs.d and organises all the
 files that Emacs and other packages would otherwise just dump directly into
 .emacs.d
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (use-package no-littering :ensure t)
-#+END_SRC
+#+end_src
 
 ** Aesthetics
 
@@ -81,33 +81,33 @@ other types of buffers, like dired, treemacs, magit, or the find-file buffer.
 
 This feature is one of the things I really enjoyed, visually, about VSCode
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (use-package solaire-mode
     :demand t
     :init (solaire-global-mode 1))
-#+END_SRC
+#+end_src
 
 To make solaire mode work, we need to install a theme that supports it. I quite
 like the nord theme, but the official one in the ~nord-theme~ package doesn't
 support it so I'm using the ~doom-themes~ version.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (use-package doom-themes
     :init (load-theme 'doom-wilmersdorf t))
-#+END_SRC
+#+end_src
 
 Then nyan cat as a progress bar in my modeline
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (use-package nyan-mode
     :init (nyan-mode))
-#+END_SRC
+#+end_src
 
 Silence the audible bell, and make the visual bell quite a bit more subtle -
 just flash the text on the modeline white briefly, rather than flashing the
 whole window.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (setq ring-bell-function
       (lambda ()
         (let ((orig-fg (face-foreground 'mode-line)))
@@ -115,37 +115,37 @@ whole window.
           (run-with-idle-timer 0.1 nil
                                (lambda (fg) (set-face-foreground 'mode-line fg))
                                orig-fg))))
-#+END_SRC
+#+end_src
 
 I like the cursor to be an I-beam, and I like to disable all the toolbars and
 scrollbars for a pretty clean looking frame.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (setq-default cursor-type 'bar)
   (toggle-scroll-bar -1)
   (menu-bar-mode 0)
   (tool-bar-mode 0)
-#+END_SRC
+#+end_src
 
 Don't display text in the startup buffer or the scratch buffer by default
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (setq initial-scratch-message "")
   (setq inhibit-startup-message t)
-#+END_SRC
+#+end_src
 
 Increase the line spacing a little from the default and turn on line numbers
 globally.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (setq-default line-spacing 5)
   (global-display-line-numbers-mode t)
-#+END_SRC
+#+end_src
 
 Now we'll configure the default fonts. We have to do this per OS because
 everything renders fonts differently and at different sizes.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (cond ((eq (window-system) 'x)
          (set-face-attribute 'default nil :font "Jetbrains Mono 16"))
         ((eq (window-system) 'mac)
@@ -153,23 +153,27 @@ everything renders fonts differently and at different sizes.
          (set-face-attribute 'default nil :font "Jetbrains Mono 18"))
         ((eq (window-system) 'w32)
          (set-face-attribute 'default nil :font "Consolas 16")))
-#+END_SRC
+#+end_src
 
 ** General Editor Settings
 
 Break all long lines automatically at ~fill-column~ so I don't have to press
 ~M-q~ all the time. And then set ~fill-column~ to 80 chars, because 70 is a bit short.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (add-hook 'text-mode-hook 'turn-on-auto-fill)
   (set-fill-column 80)
 #+end_src
 
+
+#+begin_src emacs-lisp
   (setq auto-save-default nil)
   (setq backup-directory-alist
         (list (cons "." (expand-file-name "backup" user-emacs-directory))))
   (setq make-backup-files nil)
+#+end_src
 
+#+begin_src emacs-lisp
   (setq mouse-wheel-scroll-amount '(1 ((shift) . 1) ((control) . nil)))
 
   (fset 'yes-or-no-p 'y-or-n-p)
@@ -338,14 +342,14 @@ Break all long lines automatically at ~fill-column~ so I don't have to press
     :init (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
           (setq magit-push-current-set-remote-if-missing nil)
     :bind ("C-c s" . magit-status))
-#+END_SRC
+#+end_src
 
 ** Ruby
 
 Some of the codebases I use often require frozen strings. So this convenience
 function will add the magic header if it's not already there.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (defun ruby-frozen-string-literal ()
     "Check the current buffer for the magic comment # frozen_string_literal: true.
   If the comment doesn't exist, offer to insert it."
@@ -355,7 +359,7 @@ function will add the magic header if it's not already there.
       (unless (string= (thing-at-point 'line)
                        "# frozen_string_literal: true\n")
         (insert "# frozen_string_literal: true\n\n"))))
-#+END_SRC
+#+end_src
 
 I prefer to use rbenv to manage my Ruby versions, in conjunction with
 ruby-build. rbenv is pretty easy to understand, and whilst I'm not wild about
@@ -363,37 +367,37 @@ the shims, it is working well for me.
 
 I also use minitest for testing.
 
-#+BEGIN_SRC
+#+begin_src emacs-lisp
   (use-package rbenv
     :init (global-rbenv-mode)
           (rbenv-use-global))
 
   (use-package minitest :ensure t)
-#+END_SRC
+#+end_src
 
 I use enh-ruby-mode instead of the built in ruby-mode. This is entirely due to
 the existence of enh-ruby-bounce-deep-indent
 
 ruby-mode's default behaviour is to do this:
 
-#+BEGIN_SRC ruby :tangle no
+#+begin_src ruby :tangle no
   test_var = if condition
              "yes"
            else
              "no"
            end
-#+END_SRC
+#+end_src
 
 Whereas enh-ruby-mode will let you toggle between that, and my preferred format
 with another press of the tab key
 
-#+BEGIN_SRC ruby :tangle no
+#+begin_src ruby :tangle no
   test_var = if condition
     "yes"
   else
     "no"
   end
-#+END_SRC
+#+end_src
 
 There's a small amount of customisation happening here
 
@@ -412,7 +416,7 @@ And some other things that I need to look into
 - [ ] Do I really want case-fold-search to be turned on?
 - [ ] What does enh-ruby-hanging-brace-indent-level do?
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (use-package enh-ruby-mode
     :mode "\\.rb"
           "\\Gemfile"
@@ -426,7 +430,7 @@ And some other things that I need to look into
                   enh-ruby-deep-indent-construct nil
                   enh-ruby-hanging-brace-indent-level 2
                   case-fold-search t))
-#+END_SRC
+#+end_src
 
 ** C
 
@@ -437,13 +441,13 @@ tree to help format the Ruby codebase according to their programming style
 If I have a Ruby checkout in the standard place I keep my source files, then we
 should require the ruby-style file.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (let ((ruby-misc-dir "~/src/ruby/misc"))
     (if (file-directory-p ruby-misc-dir)
         (progn
           (add-to-list 'load-path ruby-misc-dir)
           (require 'ruby-style))))
-#+END_SRC
+#+end_src
 
 ** LSP
 
@@ -454,7 +458,7 @@ the servers here.
 This means that this lsp-mode config block contains config that's relevant to
 multiple different languages. Predominantly C, Ruby and Rust.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (setq lsp-client-packages '(lsp-solargraph lsp-clangd lsp-rust-analyzer))
 
   (use-package lsp-mode
@@ -468,7 +472,7 @@ multiple different languages. Predominantly C, Ruby and Rust.
                   lsp-solargraph-hover nil
                   lsp-rust-analyzer-cargo-watch-command "clippy"
                   lsp-rust-analyzer-server-display-inlay-hints t)
-            (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
+    (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
     :hook ((c-mode . lsp)
            (c++-mode . lsp)
            (rustic-mode . lsp))
@@ -551,7 +555,7 @@ multiple different languages. Predominantly C, Ruby and Rust.
 
   (use-package lsp-treemacs
     :init (lsp-treemacs-sync-mode 1))
-#+END_SRC
+#+end_src
 
 ** Rust
 
@@ -563,7 +567,7 @@ rustic-mode. With a few keybindings to tie in to specific functions in lsp-mode
 
 Most of the useful stuff is actually defined in the lsp-mode section.
 
-#+BEGIN_SRC
+#+begin_src
   (use-package rustic
     :bind (:map rustic-mode-map
                 ("C-c C-c a" . lsp-execute-code-action)
@@ -582,7 +586,7 @@ Most of the useful stuff is actually defined in the lsp-mode section.
     ;; this should no longer be necessary.
     (when buffer-file-name
       (setq-local buffer-save-without-query t)))
-#+END_SRC
+#+end_src
 
 ** Web Mode
 
@@ -591,7 +595,7 @@ handling this. I basically just bring in web-mode by default for a bunch of
 files that look a lot like they could be web adjacent and configure a consistent
 4 space indent.
 
-#+BEGIN_SRC
+#+begin_src
   (use-package web-mode
     :mode "\\.tsx"
           "\\.erb"
@@ -605,7 +609,7 @@ files that look a lot like they could be web adjacent and configure a consistent
           (setq web-mode-code-indent-offset 4)
           (setq web-mode-content-types-alist '(("jsx" . "\\.js[x]?\\'")))
           (setq web-mode-enable-auto-indentation nil))
-#+END_SRC
+#+end_src
 
 ** Markup languages
 
@@ -616,7 +620,7 @@ I also configure a default stylesheet here for previewing Markdown documents in
 HTML. Leaving everything up to the browser really doesn't do our documents any
 favours.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 
   (setq markdown-preview-stylesheets
         (list "http://thomasf.github.io/solarized-css/solarized-light.min.css"))
@@ -632,7 +636,7 @@ favours.
     :mode "\\.md"
           "\\.markdown")
 
-#+END_SRC
+#+end_src
 
 ** Org Mode for journalling and publishing
 
@@ -649,7 +653,7 @@ consistent with the rest of my emacs, which also has windmove enabled.
 
 Now I can move windows with shift+arrows no matter the buffer type
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (use-package org
     :config (setq org-startup-truncated 1)
             (add-to-list 'org-modules 'org-temp)
@@ -663,7 +667,7 @@ Now I can move windows with shift+arrows no matter the buffer type
                                                                      (emacs-lisp . t)
                                                                      (C . t)))
     :mode ("\\.org" . org-mode))
-#+END_SRC
+#+end_src
 
 I also use org-journal to document my days. It's configured to start a new
 journal file per day in a folder in my home directory.
@@ -671,13 +675,13 @@ journal file per day in a folder in my home directory.
 Each new entry in the same day gets a new timestamped org mode heading in that
 file.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (use-package org-journal
     :init (setq org-journal-prefix-key "C-c j ")
     :custom (org-journal-dir "~/Documents/log_books/")
             (org-journal-file-format "%Y%m%d")
             (org-journal-date-format "%A %d %b %Y"))
-#+END_SRC
+#+end_src
 
 The following section is an experiment to see whether I can configure and live
 with a staticly generated blog/website entirely done within Emacs.
@@ -688,7 +692,7 @@ to post less.
 
 This is still **in progress**
 
-#+BEGIN_SRC
+#+begin_src
   (use-package org-static-blog
     :init
     (setq org-static-blog-use-preview t
@@ -751,7 +755,7 @@ This is still **in progress**
            :publishing-function org-publish-attachment)
           ("eightbitraptor" :components ("orgfiles" "images" "other"))))
 
-#+END_SRC
+#+end_src
 
 ** Music with MPC and MPD
 
@@ -784,7 +788,7 @@ I usually listen to Albums, so my workflow looks a bit like this:
   Soon I'll discover a simple way of selectively removing stuff from the
   playlist but I'm not quite there yet.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src  emacs-lisp
   (use-package mpc
     :init
     (defun ebr/mpc-unselect-all (&optional event)
@@ -831,4 +835,4 @@ I usually listen to Albums, so my workflow looks a bit like this:
                 ("P" . mpc-playlist)
                 ("s" . mpc-select)
                 ("S" . mpc-stop)))
-#+END_SRC
+#+end_src

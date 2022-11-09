@@ -650,6 +650,8 @@ Now I can move windows with shift+arrows no matter the buffer type
   (use-package htmlize :ensure t)
   (use-package org
     :config (setq org-startup-truncated 1)
+            (add-to-list 'org-modules 'org-temp)
+
             (add-hook 'org-shiftup-final-hook 'windmove-up)
             (add-hook 'org-shiftleft-final-hook 'windmove-left)
             (add-hook 'org-shiftdown-final-hook 'windmove-down)

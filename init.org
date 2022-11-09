@@ -155,7 +155,7 @@ everything renders fonts differently and at different sizes.
          (set-face-attribute 'default nil :font "Consolas 16")))
 #+END_SRC
 
-** General Editor defaults
+** General Editor Settings
 
 Break all long lines automatically at ~fill-column~ so I don't have to press
 ~M-q~ all the time. And then set ~fill-column~ to 80 chars, because 70 is

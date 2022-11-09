@@ -87,9 +87,9 @@ This feature is one of the things I really enjoyed, visually, about VSCode
     :init (solaire-global-mode 1))
 #+end_src
 
-To make solaire mode work, we need to install a theme that supports it. I quite
-like the nord theme, but the official one in the ~nord-theme~ package doesn't
-support it so I'm using the ~doom-themes~ version.
+To make solaire mode work, we need to install a theme that supports it. The
+[[https://github.com/hlissner/emacs-solaire-mode#theme-support-for-solaire-mode][Github README for Solaire mode]] has a list of known supported themes. I'm using
+Wilmersorf, from the ~doom-themes~ package.
 
 #+begin_src emacs-lisp
   (use-package doom-themes

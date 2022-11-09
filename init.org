@@ -273,6 +273,8 @@ Break all long lines automatically at ~fill-column~ so I don't have to press
   (use-package undo-tree
     :config (global-undo-tree-mode))
 
+  (use-package ripgrep)
+
   (use-package ag)
   (use-package crux
       :bind (("C-a" . crux-move-beginning-of-line)))

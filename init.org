@@ -69,7 +69,7 @@ files that Emacs and other packages would otherwise just dump directly into
 .emacs.d
 
 #+begin_src emacs-lisp
-  (use-package no-littering :ensure t)
+  (use-package no-littering)
 #+end_src
 
 ** Aesthetics

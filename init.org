@@ -163,8 +163,13 @@ because everything renders fonts differently and at different sizes.
 
 ** General Editor defaults
 
+Break all long lines automatically at ~fill-column~ so I don't have to press
+~M-q~ all the time. And then set ~fill-column~ to 80 chars, because 70 is
+
 #+BEGIN_SRC emacs-lisp
   (add-hook 'text-mode-hook 'turn-on-auto-fill)
+  (set-fill-column 80)
+#+end_src
 
   (setq auto-save-default nil)
   (setq backup-directory-alist

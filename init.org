@@ -165,6 +165,10 @@ Break all long lines automatically at ~fill-column~ so I don't have to press
   (set-fill-column 80)
 #+end_src
 
+This block turns off auto save, turns off automatic backups, and sets a backup
+directory for any manually created backups to be inside the
+~user-emacs-directory~ which is ~.emacs.d~. This avoids littering projects with
+lots of ~~~ files, that aren't often gitignored.
 
 #+begin_src emacs-lisp
   (setq auto-save-default nil)
@@ -173,11 +177,19 @@ Break all long lines automatically at ~fill-column~ so I don't have to press
   (setq make-backup-files nil)
 #+end_src
 
+This controls how many lines the mouse wheel scrolls by.
+
 #+begin_src emacs-lisp
   (setq mouse-wheel-scroll-amount '(1 ((shift) . 1) ((control) . nil)))
+#+end_src
 
+Use y/n in prompts instead of having to explicitly type yes or no
+
+#+begin_src emacs-lisp
   (fset 'yes-or-no-p 'y-or-n-p)
+#+end_src
 
+#+begin_src emacs-lisp
   (when window-system
     ((lambda ()
        (global-unset-key "\C-z")

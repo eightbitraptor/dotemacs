@@ -77,12 +77,29 @@ just dump directly into .emacs.d
 
 ** Aesthetics
 
-I like my editor to be nice to look at. So let's set up a few
-frivolous things. First a nice theme
+First install solaire-mode, this changes the background colour of
+"unreal" buffers - ie. buffers that are not backed by a file. In
+general use this has the effect of making files being edited
+immediately and obviously distinct from other types of buffers, like
+dired, treemacs, magit, or the find-file buffer.
+
+This feature is one of the things I really enjoyed, visually, about
+VSCode
 
 #+BEGIN_SRC emacs-lisp
-  (use-package nord-theme
-    :init (load-theme 'nord t))
+  (use-package solaire-mode
+    :demand t
+    :init (solaire-global-mode 1))
+#+END_SRC
+
+To make solaire mode work, we need to install a theme that supports
+it. I quite like the nord theme, but the official one in the
+~nord-theme~ package doesn't support it so I'm using the ~doom-themes~
+version.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package doom-themes
+    :init (load-theme 'doom-wilmersdorf t))
 #+END_SRC
 
 Then nyan cat as a progress bar in my modeline
@@ -90,16 +107,6 @@ Then nyan cat as a progress bar in my modeline
 #+BEGIN_SRC emacs-lisp
   (use-package nyan-mode
     :init (nyan-mode))
-#+END_SRC
-
-Then solaire mode, which darkens windows that aren't directly
-connected to an editor buffer. Think how VSCode has different coloured
-backgrounds for the editor window and the filelist and you'll get the
-idea.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package solaire-mode
-    :init (solaire-global-mode 1))
 #+END_SRC
 
 Silence the audible bell, and make the visual bell quite a bit more

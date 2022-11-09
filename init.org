@@ -634,17 +634,16 @@ favours.
 
 ** Org Mode for journalling and publishing
 
-The org mode package has already been installed from the package repos
-in the early-init file, so that we could use the latest version to
-tangle this file into the standard init file init.el.
+The org mode package has already been installed from the package repos in the
+early-init file, so that we could use the latest version to tangle this file
+into the standard init file init.el.
 
-Org mode is then specified again here, so that we can define some more
-thorough initialisation on the package and set some custom variables.
+Org mode is then specified again here, so that we can define some more thorough
+initialisation on the package and set some custom variables.
 
-The main ones defined here are the shift hooks. Setting these to the
-windmove functions, means that org-mode window switching behaviour is
-much more consistent with the rest of my emacs, which also has
-windmove enabled.
+The main ones defined here are the shift hooks. Setting these to the windmove
+functions, means that org-mode window switching behaviour is much more
+consistent with the rest of my emacs, which also has windmove enabled.
 
 Now I can move windows with shift+arrows no matter the buffer type
 

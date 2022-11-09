@@ -648,9 +648,6 @@ consistent with the rest of my emacs, which also has windmove enabled.
 Now I can move windows with shift+arrows no matter the buffer type
 
 #+BEGIN_SRC emacs-lisp
-  ;;; Org Mode
-
-  (use-package htmlize :ensure t)
   (use-package org
     :config (setq org-startup-truncated 1)
             (add-to-list 'org-modules 'org-temp)

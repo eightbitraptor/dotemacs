@@ -4,55 +4,52 @@
 
 * Emacs config - eightbitraptor
 
-This is the latest incarnation of my emacs config. It's been built up,
-torn down, refactored and rebuilt many times since I started using
-Emacs (the earliest reference I can find is a really ugly screenshot
-of my work Mac circa 2011 - a long time before I knew remotely what I
-was doing :|).
+This is the latest incarnation of my emacs config. It's been built up, torn
+down, refactored and rebuilt many times since I started using Emacs (the
+earliest reference I can find is a really ugly screenshot of my work Mac circa
+2011 - a long time before I knew remotely what I was doing :|).
 
 ** Pre-initialisation (early-init.el)
 
-This configuration uses straight.el as a package manager and org babel
-to document the configuration. Alongside this file there is also an
-early-init.el which Emacs will run before setting up the GUI and
-before loading any other init files.
+This configuration uses straight.el as a package manager and org babel to
+document the configuration. Alongside this file there is also an early-init.el
+which Emacs will run before setting up the GUI and before loading any other init
+files.
 
 The early-init in this repo does a couple of things:
 
 1. Uses straight.el for packaging. That is:
-   - install the latest version of straight.el if it's not already
-     installed
+   - install the latest version of straight.el if it's not already installed
    - disable the built in package.el
    - install use-package and configure it to use straight.el by
      default
-2. Install the latest version of org-mode, with no config, just to be
-   able to tangle this file.
+2. Install the latest version of org-mode, with no config, just to be able to
+   tangle this file.
 
-I install the latest version of org-mode in the early init, to avoid
-any compatability problems later on when using straight.el to properly
-configure org and some dependencies that I like to use.
+I install the latest version of org-mode in the early init, to avoid any
+compatability problems later on when using straight.el to properly configure org
+and some dependencies that I like to use.
 
 *** Notes for initial setup
 
-You should be able to clone this repo straight into ~/.emacs.d and
-start Emacs and everything will be setup and configured on first
-start. Although note that due to a lot of work being done in
-early-init.el (including loading this file) the first startup will be
-very slow as all the packages are git cloned from their various
-repositories, but also that _the UI will not be running_
+You should be able to clone this repo straight into ~/.emacs.d and start Emacs
+and everything will be setup and configured on first start. Although note that
+due to a lot of work being done in early-init.el (including loading this file)
+the first startup will be very slow as all the packages are git cloned from
+their various repositories, but also that _the UI will not be running_
 
 This may make it look like it didn't work, but check in htop/Task
-Manager/whatever and you should see the process active and doing stuff
-and eventually Emacs will appear. This will only happen on first boot.
+Manager/whatever and you should see the process active and doing stuff and
+eventually Emacs will appear. This will only happen on first boot.
 
-I appreciate the UX for this is shit. But it only happens once per
-machine, and well; It doesn't really bother me enough to fix it.
+I appreciate the UX for this is shit. But it only happens once per machine, and
+well; It doesn't really bother me enough to fix it.
 
 ** Setting up the PATH
 
-I like to make sure that Emacs is using the same PATH and Ruby paths
-as my shell for consistency. This is important on macOS where
-processes are started with a different environment.
+I like to make sure that Emacs is using the same PATH and Ruby paths as my shell
+for consistency. This is important on macOS where processes are started with a
+different environment.
 
 #+BEGIN_SRC emacs-lisp
   (use-package exec-path-from-shell
@@ -67,9 +64,9 @@ processes are started with a different environment.
 
 ** No littering
 
-No littering makes etc and var directories inside .emacs.d and
-organises all the files that Emacs and other packages would otherwise
-just dump directly into .emacs.d
+No littering makes etc and var directories inside .emacs.d and organises all the
+files that Emacs and other packages would otherwise just dump directly into
+.emacs.d
 
 #+BEGIN_SRC emacs-lisp
   (use-package no-littering :ensure t)
@@ -77,14 +74,12 @@ just dump directly into .emacs.d
 
 ** Aesthetics
 
-First install solaire-mode, this changes the background colour of
-"unreal" buffers - ie. buffers that are not backed by a file. In
-general use this has the effect of making files being edited
-immediately and obviously distinct from other types of buffers, like
-dired, treemacs, magit, or the find-file buffer.
+First install solaire-mode, this changes the background colour of "unreal"
+buffers - ie. buffers that are not backed by a file. In general use this has the
+effect of making files being edited immediately and obviously distinct from
+other types of buffers, like dired, treemacs, magit, or the find-file buffer.
 
-This feature is one of the things I really enjoyed, visually, about
-VSCode
+This feature is one of the things I really enjoyed, visually, about VSCode
 
 #+BEGIN_SRC emacs-lisp
   (use-package solaire-mode
@@ -92,10 +87,9 @@ VSCode
     :init (solaire-global-mode 1))
 #+END_SRC
 
-To make solaire mode work, we need to install a theme that supports
-it. I quite like the nord theme, but the official one in the
-~nord-theme~ package doesn't support it so I'm using the ~doom-themes~
-version.
+To make solaire mode work, we need to install a theme that supports it. I quite
+like the nord theme, but the official one in the ~nord-theme~ package doesn't
+support it so I'm using the ~doom-themes~ version.
 
 #+BEGIN_SRC emacs-lisp
   (use-package doom-themes
@@ -109,9 +103,9 @@ Then nyan cat as a progress bar in my modeline
     :init (nyan-mode))
 #+END_SRC
 
-Silence the audible bell, and make the visual bell quite a bit more
-subtle - just flash the text on the modeline white briefly, rather
-than flashing the whole window.
+Silence the audible bell, and make the visual bell quite a bit more subtle -
+just flash the text on the modeline white briefly, rather than flashing the
+whole window.
 
 #+BEGIN_SRC emacs-lisp
   (setq ring-bell-function
@@ -123,8 +117,8 @@ than flashing the whole window.
                                orig-fg))))
 #+END_SRC
 
-I like the cursor to be an I-beam, and I like to disable all the
-toolbars and scrollbars for a pretty clean looking frame.
+I like the cursor to be an I-beam, and I like to disable all the toolbars and
+scrollbars for a pretty clean looking frame.
 
 #+BEGIN_SRC emacs-lisp
   (setq-default cursor-type 'bar)
@@ -140,16 +134,16 @@ Don't display text in the startup buffer or the scratch buffer by default
   (setq inhibit-startup-message t)
 #+END_SRC
 
-Increase the line spacing a little from the default and turn on line
-numbers globally.
+Increase the line spacing a little from the default and turn on line numbers
+globally.
 
 #+BEGIN_SRC emacs-lisp
   (setq-default line-spacing 5)
   (global-display-line-numbers-mode t)
 #+END_SRC
 
-Now we'll configure the default fonts. We have to do this per OS
-because everything renders fonts differently and at different sizes.
+Now we'll configure the default fonts. We have to do this per OS because
+everything renders fonts differently and at different sizes.
 
 #+BEGIN_SRC emacs-lisp
   (cond ((eq (window-system) 'x)
@@ -346,9 +340,8 @@ Break all long lines automatically at ~fill-column~ so I don't have to press
 
 ** Ruby
 
-Some of the codebases I use often require frozen strings. So this
-convenience function will add the magic header if it's not already
-there.
+Some of the codebases I use often require frozen strings. So this convenience
+function will add the magic header if it's not already there.
 
 #+BEGIN_SRC emacs-lisp
   (defun ruby-frozen-string-literal ()
@@ -363,8 +356,8 @@ there.
 #+END_SRC
 
 I prefer to use rbenv to manage my Ruby versions, in conjunction with
-ruby-build. rbenv is pretty easy to understand, and whilst I'm not
-wild about the shims, it is working well for me.
+ruby-build. rbenv is pretty easy to understand, and whilst I'm not wild about
+the shims, it is working well for me.
 
 I also use minitest for testing.
 
@@ -376,8 +369,8 @@ I also use minitest for testing.
   (use-package minitest :ensure t)
 #+END_SRC
 
-I use enh-ruby-mode instead of the built in ruby-mode. This is
-entirely due to the existence of enh-ruby-bounce-deep-indent
+I use enh-ruby-mode instead of the built in ruby-mode. This is entirely due to
+the existence of enh-ruby-bounce-deep-indent
 
 ruby-mode's default behaviour is to do this:
 
@@ -389,8 +382,8 @@ ruby-mode's default behaviour is to do this:
            end
 #+END_SRC
 
-Whereas enh-ruby-mode will let you toggle between that, and my
-preferred format with another press of the tab key
+Whereas enh-ruby-mode will let you toggle between that, and my preferred format
+with another press of the tab key
 
 #+BEGIN_SRC ruby :tangle no
   test_var = if condition
@@ -402,16 +395,15 @@ preferred format with another press of the tab key
 
 There's a small amount of customisation happening here
 
-- Make sure that we don't add encoding comments to our
-  files. Generally I don't want anything in the git diff, other than
-  what I'm explicitly changing.
-- The magic enh-ruby-bounce-deep-indent as well as clearing out the
-  list of deep indent constructs so that we default to my preferred
-  way. Normally if, def, class and module are deep indented by default
-- Turn on case-fold-search, this means that searching is basically
-  case insensitive.
-- Makes sure that Ruby mode is activated for things that might not
-  look like Ruby files: rack configs, Rakefiles, Gemfiles etc.
+- Make sure that we don't add encoding comments to our files. Generally I don't
+  want anything in the git diff, other than what I'm explicitly changing.
+- The magic enh-ruby-bounce-deep-indent as well as clearing out the list of deep
+  indent constructs so that we default to my preferred way. Normally if, def,
+  class and module are deep indented by default
+- Turn on case-fold-search, this means that searching is basically case
+  insensitive.
+- Makes sure that Ruby mode is activated for things that might not look like
+  Ruby files: rack configs, Rakefiles, Gemfiles etc.
 
 And some other things that I need to look into
 
@@ -436,13 +428,12 @@ And some other things that I need to look into
 
 ** C
 
-The Ruby core team maintain an emacs style mode inside the main CRuby
-source tree to help format the Ruby codebase according to their
-programming style (which as far as I can tell is a mix of K&R and
-GNU).
+The Ruby core team maintain an emacs style mode inside the main CRuby source
+tree to help format the Ruby codebase according to their programming style
+(which as far as I can tell is a mix of K&R and GNU).
 
-If I have a Ruby checkout in the standard place I keep my source
-files, then we should require the ruby-style file.
+If I have a Ruby checkout in the standard place I keep my source files, then we
+should require the ruby-style file.
 
 #+BEGIN_SRC emacs-lisp
   (let ((ruby-misc-dir "~/src/ruby/misc"))
@@ -454,16 +445,15 @@ files, then we should require the ruby-style file.
 
 ** LSP
 
-LSP configuration is slightly frustrating, because due to the way
-existence of a single lsp-client mode that talks to multiple
-lsp-servers I need to configure the servers here.
+LSP configuration is slightly frustrating, because due to the way existence of a
+single lsp-client mode that talks to multiple lsp-servers I need to configure
+the servers here.
 
-This means that this lsp-mode config block contains config that's
-relevant to multiple different languages. Predominantly C, Ruby and
-Rust.
+This means that this lsp-mode config block contains config that's relevant to
+multiple different languages. Predominantly C, Ruby and Rust.
 
 #+BEGIN_SRC emacs-lisp
-   (setq lsp-client-packages '(lsp-solargraph lsp-clangd lsp-rust-analyzer))
+  (setq lsp-client-packages '(lsp-solargraph lsp-clangd lsp-rust-analyzer))
 
   (use-package lsp-mode
     :config (setq lsp-idle-delay 0.1
@@ -562,8 +552,8 @@ Rust.
 - [ ] Remove or explain the cargo-culted rustic-mode-hook
 
 This section sets up defaults for programming in Rust. I'm using
-rustic-mode. With a few keybindings to tie in to specific functions in
-lsp-mode (defined further up).
+rustic-mode. With a few keybindings to tie in to specific functions in lsp-mode
+(defined further up).
 
 Most of the useful stuff is actually defined in the lsp-mode section.
 
@@ -590,10 +580,10 @@ Most of the useful stuff is actually defined in the lsp-mode section.
 
 ** Web Mode
 
-I don't do much web stuff anymore so this may not be the most up to
-date way of handling this. I basically just bring in web-mode by
-default for a bunch of files that look a lot like they could be web
-adjacent and configure a consistent 4 space indent.
+I don't do much web stuff anymore so this may not be the most up to date way of
+handling this. I basically just bring in web-mode by default for a bunch of
+files that look a lot like they could be web adjacent and configure a consistent
+4 space indent.
 
 #+BEGIN_SRC
   (use-package web-mode
@@ -613,12 +603,12 @@ adjacent and configure a consistent 4 space indent.
 
 ** Markup languages
 
-Import the packages and associate the right file types required to
-write content in Markdown, Toml and Yaml.
+Import the packages and associate the right file types required to write content
+in Markdown, Toml and Yaml.
 
-I also configure a default stylesheet here for previewing Markdown
-documents in HTML. Leaving everything up to the browser really doesn't
-do our documents any favours.
+I also configure a default stylesheet here for previewing Markdown documents in
+HTML. Leaving everything up to the browser really doesn't do our documents any
+favours.
 
 #+BEGIN_SRC emacs-lisp
 
@@ -682,13 +672,12 @@ in that file.
             (org-journal-date-format "%A %d %b %Y"))
 #+END_SRC
 
-The following section is an experiment to see whether I can configure
-and live with a staticly generated blog/website entirely done within
-Emacs.
+The following section is an experiment to see whether I can configure and live
+with a staticly generated blog/website entirely done within Emacs.
 
-Currently my homepage uses Hugo and the process required to push a new
-post has a high enough barrier to entry that I forget it every time,
-and it makes me want to post less.
+Currently my homepage uses Hugo and the process required to push a new post has
+a high enough barrier to entry that I forget it every time, and it makes me want
+to post less.
 
 This is still **in progress**
 
@@ -759,25 +748,23 @@ This is still **in progress**
 
 ** Music with MPC and MPD
 
-Here we configure the built-in mpc-mode to connect to a running Mopidy
-server on my home network desktop machine "senjougahara".
+Here we configure the built-in mpc-mode to connect to a running Mopidy server on
+my home network desktop machine "senjougahara".
 
 This relies on the following things:
 
-- Mopidy is running with the MPD plugin on a host, using the default
-  Mopidy port
-- There is some way of mapping the hostname "senjougahara" to an
-  IP. My network is small so I just use an entry in /etc/hosts for
-  this.
+- Mopidy is running with the MPD plugin on a host, using the default Mopidy port
+- There is some way of mapping the hostname "senjougahara" to an IP. My network
+  is small so I just use an entry in /etc/hosts for this.
 
-MPC mode has a really weird UI. It _looks_ like it should behave like
-a "normal" music player, it has selection windows for genre, artist,
-album etc. But there doesn't seem to be any built in ways to
-manipulate the main playlist in MPD beyond the standard mpc-add.
+MPC mode has a really weird UI. It _looks_ like it should behave like a "normal"
+music player, it has selection windows for genre, artist, album etc. But there
+doesn't seem to be any built in ways to manipulate the main playlist in MPD
+beyond the standard mpc-add.
 
-So there are a few helper functions in here that help to add groups of
-stuff to the playlist, as well as remove things and clear down the
-playlist. All features I use from ncmpcpp all the time.
+So there are a few helper functions in here that help to add groups of stuff to
+the playlist, as well as remove things and clear down the playlist. All features
+I use from ncmpcpp all the time.
 
 I usually listen to Albums, so my workflow looks a bit like this:
 
@@ -785,11 +772,10 @@ I usually listen to Albums, so my workflow looks a bit like this:
 - press a to append it to the playlist
 - press p to start playing (this toggles play/pause states)
 - continue to add more albums as and when I feel like it.
-- when I want a change, hit S to stop playing and clear the current
-  playlist
+- when I want a change, hit S to stop playing and clear the current playlist
 
-  Soon I'll discover a simple way of selectively removing stuff from
-  the playlist but I'm not quite there yet.
+  Soon I'll discover a simple way of selectively removing stuff from the
+  playlist but I'm not quite there yet.
 
 #+BEGIN_SRC emacs-lisp
   (use-package mpc

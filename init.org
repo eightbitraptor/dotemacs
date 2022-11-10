@@ -75,6 +75,8 @@ document the configuration. Alongside this file there is also an early-init.el
 which Emacs will run before setting up the GUI and before loading any other init
 files.
 
+[[https://user-images.githubusercontent.com/31869/201213452-ad555d25-565d-4550-bffc-c64b00170de4.png]]
+
 The early-init in this repo does a couple of things:
 
 1. Uses straight.el for packaging. That is:

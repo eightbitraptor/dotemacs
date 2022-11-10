@@ -40,6 +40,7 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
   - [[#ruby][Ruby]]
   - [[#c][C]]
   - [[#lsp][LSP]]
+  - [[#treemacs][Treemacs]]
   - [[#rust][Rust]]
   - [[#web-mode][Web Mode]]
   - [[#markup-languages][Markup languages]]
@@ -764,6 +765,23 @@ multiple different languages. Predominantly C, Ruby and Rust.
            ([remap xref-find-definitions] . #'lsp-ui-peek-find-definitions)
            ([remap xref-find-references] . #'lsp-ui-peek-find-references)))
 
+#+end_src
+
+** TODO Treemacs
+
+A left hand sidebar for file navigation and a directory tree, like
+basically every editor ever.
+
+I wonder what the first editor to actually adopt this paradigm was? I
+wonder if it was Emacs? I remember it from using Bluefish back in
+2003? Maybe. I might even have been using Slackware!
+
+Anyway. I change the treemacs faces to be not monospace because it
+looks prettier.
+
+Treat ~node_modules~ ~.venv~ and ~.cask~ as garbage and don't show them.
+
+#+begin_src emacs-lisp
   (use-package treemacs
     :init (with-eval-after-load 'winum
             (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
@@ -802,6 +820,14 @@ multiple different languages. Predominantly C, Ruby and Rust.
   (use-package treemacs-magit
     :after (treemacs magit))
 
+  (use-package lsp-treemacs
+    :init (lsp-treemacs-sync-mode 1))
+
+#+end_src
+
+This I cargo culted from somewhere and I don't know what it does.
+
+#+begin_src emacs-lisp
   (use-package treemacs-persp ;;treemacs-perspective if you use perspective.el vs. persp-mode
     :after (treemacs persp-mode) ;;or perspective vs. persp-mode
     :config (treemacs-set-scope-type 'Perspectives))
@@ -809,9 +835,6 @@ multiple different languages. Predominantly C, Ruby and Rust.
   (use-package treemacs-tab-bar ;;treemacs-tab-bar if you use tab-bar-mode
     :after (treemacs)
     :config (treemacs-set-scope-type 'Tabs))
-
-  (use-package lsp-treemacs
-    :init (lsp-treemacs-sync-mode 1))
 #+end_src
 
 ** Rust

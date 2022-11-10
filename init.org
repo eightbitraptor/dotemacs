@@ -3,53 +3,72 @@
 #+STARTUP overview
 
 * Emacs config - eightbitraptor
+:PROPERTIES:
+:TOC: :include all
+:END:
 
 This is the latest incarnation of my emacs config. It's been built up, torn
 down, refactored and rebuilt many times since I started using Emacs (the
 earliest reference I can find is a really ugly screenshot of my work Mac circa
 2011 - a long time before I knew remotely what I was doing :|).
 
-* Contents
-:PROPERTIES:
-:TOC: :include all
-:END:
 :CONTENTS:
 - [[#emacs-config---eightbitraptor][Emacs config - eightbitraptor]]
-- [[#contents][Contents]]
-  - [[#pre-initialisation-early-initel][Pre-initialisation (early-init.el)]]
-    - [[#notes-for-initial-setup][Notes for initial setup]]
-  - [[#setting-up-the-path][Setting up the PATH]]
-  - [[#no-littering][No littering]]
-  - [[#aesthetics][Aesthetics]]
+  - [[#introduction][Introduction]]
+    - [[#setup-instructions][Setup Instructions]]
   - [[#general-editor-settings][General Editor Settings]]
+    - [[#setting-up-the-path][Setting up the PATH]]
+    - [[#no-littering][No littering]]
+    - [[#organise-backup-files][Organise backup files]]
+    - [[#theming-and-aesthetics][Theming and Aesthetics]]
+    - [[#line-lengths][Line Lengths]]
+    - [[#mouse-scrolling][Mouse Scrolling]]
+    - [[#answer-prompt-questions-faster][Answer prompt questions faster]]
+    - [[#ergonomics][Ergonomics]]
+    - [[#default-indentation][Default Indentation]]
+    - [[#default-selection-behaviour][Default Selection behaviour]]
+    - [[#undo-tree][Undo Tree.]]
+    - [[#crux][Crux]]
+    - [[#whitespace-butler][Whitespace Butler]]
   - [[#helper-functions][Helper Functions]]
-  - [[#global-keybingings][Global keybingings]]
-  - [[#which-key][Which key]]
-  - [[#undo-tree][Undo Tree.]]
-  - [[#ripgrep][Ripgrep]]
-  - [[#crux][Crux]]
-  - [[#flx][Flx]]
-  - [[#ivy][Ivy]]
-  - [[#imenu-list][Imenu-list]]
-  - [[#projectile][Projectile]]
-  - [[#direnv][Direnv]]
-  - [[#editorconfig][Editorconfig]]
-  - [[#whitespace-butler][Whitespace Butler]]
-  - [[#company-mode][Company mode]]
-  - [[#magit][Magit]]
-  - [[#ruby][Ruby]]
-  - [[#c][C]]
-  - [[#lsp][LSP]]
-  - [[#treemacs][Treemacs]]
-  - [[#rust][Rust]]
-  - [[#web-mode][Web Mode]]
-  - [[#markup-languages][Markup languages]]
-  - [[#org-mode-for-journalling-and-publishing][Org Mode for journalling and publishing]]
-  - [[#music-with-mpc-and-mpd][Music with MPC and MPD]]
+    - [[#kill-other-buffers-and-focus-the-window][Kill other buffers and focus the window]]
+    - [[#duplicate-lines][Duplicate lines]]
+    - [[#quickly-change-frame-font-sizes][Quickly change frame font sizes]]
+  - [[#keybindings][Keybindings]]
+    - [[#custom-functions][Custom functions]]
+    - [[#remap-m-x][Remap M-x]]
+    - [[#resizing-windows][Resizing windows]]
+    - [[#maximise-frames][Maximise frames]]
+    - [[#move-between-windows][Move between windows]]
+    - [[#which-key-tooltips][Which key tooltips]]
+  - [[#navigation-search--project-management][Navigation, Search & Project Management]]
+    - [[#ripgrep][Ripgrep]]
+    - [[#flx][Flx]]
+    - [[#ivy][Ivy]]
+    - [[#imenu-list][Imenu-list]]
+    - [[#projectile][Projectile]]
+    - [[#direnv][Direnv]]
+    - [[#editorconfig][Editorconfig]]
+  - [[#programming-utilities][Programming Utilities]]
+    - [[#company-mode][Company mode]]
+    - [[#magit][Magit]]
+    - [[#lsp][LSP]]
+    - [[#treemacs][Treemacs]]
+  - [[#language-modes][Language Modes]]
+    - [[#ruby][Ruby]]
+    - [[#c][C]]
+    - [[#rust][Rust]]
+    - [[#web-jshtmlcss][Web (js/html/css)]]
+    - [[#markup-markdowntomlyaml][Markup (Markdown/toml/yaml)]]
+  - [[#org-mode][Org Mode]]
+    - [[#journal][Journal]]
+    - [[#blogging][Blogging]]
+  - [[#audio][Audio]]
+    - [[#mpd-client][MPD client]]
 :END:
 
 
-** Pre-initialisation (early-init.el)
+** Introduction
 
 This configuration uses straight.el as a package manager and org babel to
 document the configuration. Alongside this file there is also an early-init.el
@@ -70,7 +89,7 @@ I install the latest version of org-mode in the early init, to avoid any
 compatability problems later on when using straight.el to properly configure org
 and some dependencies that I like to use.
 
-*** Notes for initial setup
+*** Setup Instructions
 
 You should be able to clone this repo straight into ~/.emacs.d and start Emacs
 and everything will be setup and configured on first start. Although note that
@@ -85,7 +104,9 @@ eventually Emacs will appear. This will only happen on first boot.
 I appreciate the UX for this is shit. But it only happens once per machine, and
 well; It doesn't really bother me enough to fix it.
 
-** Setting up the PATH
+** General Editor Settings
+
+*** Setting up the PATH
 
 I like to make sure that Emacs is using the same PATH and Ruby paths as my shell
 for consistency. This is important on macOS where processes are started with a
@@ -102,7 +123,7 @@ different environment.
           (exec-path-from-shell-initialize))
 #+end_src
 
-** No littering
+*** No littering
 
 No littering makes etc and var directories inside .emacs.d and organises all the
 files that Emacs and other packages would otherwise just dump directly into
@@ -112,7 +133,23 @@ files that Emacs and other packages would otherwise just dump directly into
   (use-package no-littering)
 #+end_src
 
-** Aesthetics
+
+*** Organise backup files
+
+This block turns off auto save, turns off automatic backups, and sets a backup
+directory for any manually created backups to be inside the
+~user-emacs-directory~ which is ~.emacs.d~. This avoids littering projects with
+lots of ~~~ files, that aren't often gitignored.
+
+#+begin_src emacs-lisp
+  (setq auto-save-default nil)
+  (setq backup-directory-alist
+        (list (cons "." (expand-file-name "backup" user-emacs-directory))))
+  (setq make-backup-files nil)
+#+end_src
+
+
+*** Theming and Aesthetics
 
 First install solaire-mode, this changes the background colour of "unreal"
 buffers - ie. buffers that are not backed by a file. In general use this has the
@@ -195,7 +232,7 @@ everything renders fonts differently and at different sizes.
          (set-face-attribute 'default nil :font "Consolas 16")))
 #+end_src
 
-** General Editor Settings
+*** Line Lengths
 
 Break all long lines automatically at ~fill-column~ so I don't have to press
 ~M-q~ all the time. And then set ~fill-column~ to 80 chars, because 70 is a bit short.
@@ -205,17 +242,7 @@ Break all long lines automatically at ~fill-column~ so I don't have to press
   (set-fill-column 80)
 #+end_src
 
-This block turns off auto save, turns off automatic backups, and sets a backup
-directory for any manually created backups to be inside the
-~user-emacs-directory~ which is ~.emacs.d~. This avoids littering projects with
-lots of ~~~ files, that aren't often gitignored.
-
-#+begin_src emacs-lisp
-  (setq auto-save-default nil)
-  (setq backup-directory-alist
-        (list (cons "." (expand-file-name "backup" user-emacs-directory))))
-  (setq make-backup-files nil)
-#+end_src
+*** Mouse Scrolling
 
 This controls how many lines the mouse wheel scrolls by.
 
@@ -223,11 +250,15 @@ This controls how many lines the mouse wheel scrolls by.
   (setq mouse-wheel-scroll-amount '(1 ((shift) . 1) ((control) . nil)))
 #+end_src
 
+*** Answer prompt questions faster
+
 Use y/n in prompts instead of having to explicitly type yes or no
 
 #+begin_src emacs-lisp
   (fset 'yes-or-no-p 'y-or-n-p)
 #+end_src
+
+*** Ergonomics
 
 I always used to smash these keys accidentally and they'd do random
 stuff. I was bad at typing!
@@ -243,15 +274,18 @@ not. At some point I'll get around to testing that...
        (global-unset-key "\C-x\C-z"))))
 #+end_src
 
+*** Default Indentation
+
 Default to 4 spaces as an indent everywhere. Obviously other modes are
 going to override this as necessary, but I like a 4 space indent
 generally.
 
 #+begin_src emacs-lisp
   (setq-default indent-tabs-mode nil)
-
   (setq-default c-basic-offset 4)
 #+end_src
+
+*** Default Selection behaviour
 
 And turn on ~delete-selection-mode~. This makes emacs visual selection
 behave much more like "modern" editors. ie. when you select stuff and
@@ -266,11 +300,57 @@ not actually remove the seletion.
   (delete-selection-mode t)
 #+end_src
 
+*** Undo Tree.
+
+This package is magical, it lets you see the entire edit history of
+your file as a tree instead of a linear series of changes. It also
+provides a way of visualising the tree, so you can get back basically
+any change you make while editing a file.
+
+#+begin_src emacs-lisp
+  (use-package undo-tree
+    :config (global-undo-tree-mode))
+#+end_src
+
+*** Crux
+
+Crux really is a collection of really useful extensions! The ones I
+like are:
+
+- ~crux-move-beginning-of-line~ bounces between the first non
+  whitespace char in the line and the actual beginning of the line
+- ~crux-smart-open-line-above~ Inserts a new line above the point and
+  indents it according to the context. Basically the same as ~O~ in
+  Vim.
+- ~crux-smart-kill-line~ kills from the point to the end of the line,
+  then when pressed again, kills the rest of the line. Just means I
+  can usually hit ~C-k~ twice instead of ~C-a C-k~ which is quicker.
+
+#+begin_src emacs-lisp
+  (use-package crux
+    :bind (("C-a" . crux-move-beginning-of-line)
+           ("C-o" . crux-smart-open-line-above)
+           ("C-k" . crux-smart-kill-line)))
+
+#+end_src
+
+*** Whitespace Butler
+
+Makes sure I don't accidentally commit loads of bad whitespace.
+
+#+begin_src
+  (use-package ws-butler
+    :init (setq ws-butler-keep-whitespace-before-point nil)
+    (ws-butler-global-mode))
+#+end_src
+
 ** Helper Functions
 
 A few things that I've found useful over the years. They should
 already be pretty well documented - just checkout the function
 documentation.
+
+*** Kill other buffers and focus the window
 
 #+begin_src emacs-lisp
   (defun kill-other-buffers ()
@@ -283,6 +363,11 @@ documentation.
                 (remove nil (mapcar #'(lambda (b) (when (buffer-file-name b) b))
                                     (buffer-list))))))
 
+#+end_src
+
+*** Duplicate lines
+
+#+begin_src emacs-lisp  
   (defun duplicate-line (arg)
     "Duplicate current line, leaving point in lower line."
     (interactive "*p")
@@ -314,7 +399,14 @@ documentation.
 
     ;; put the point in the lowest line and return
     (next-line arg))
+#+end_src
 
+*** Quickly change frame font sizes
+
+Useful when sharing my screen on a vidoe call so the font can be
+legible on the recording.
+
+#+begin_src
   (defun my-alter-frame-font-size (fn)
     (let* ((current-font-name (frame-parameter nil 'font))
            (decomposed-font-name (x-decompose-font-name current-font-name))
@@ -331,7 +423,9 @@ documentation.
     (my-alter-frame-font-size '1-))
 #+end_src
 
-** Global keybingings
+** Keybindings
+
+*** Custom functions
 
 First map some of the aformentioned custom functions.
 
@@ -341,6 +435,8 @@ First map some of the aformentioned custom functions.
   (global-set-key (kbd "C-=") 'my-inc-frame-font-size)
   (global-set-key (kbd "C--") 'my-dec-frame-font-size)
 #+end_src
+
+*** Remap M-x
 
 This is something I learned from [[https://sites.google.com/site/steveyegge2/effective-emacs][Steve Yegge's excellent blog post
 about effective Emacs]] - Use a key combo for ~M-x~ that doesn't
@@ -356,6 +452,8 @@ Peterson's Mastering Emacs book]] back in the day.
   (global-set-key "\C-c\C-m" 'execute-extended-command)
 #+end_src
 
+*** Resizing windows
+
 Some keybindings for resizing Windows. I can't remember when I last
 used these but you know I'd need them if I ever got rid of them so
 here they are.
@@ -367,12 +465,13 @@ here they are.
   (global-set-key (kbd "s-<down>")  'shrink-window)
 #+end_src
 
-Embiggenate Frame!
+*** Maximise frames
 
 #+begin_src emacs-lisp
   (global-set-key (kbd "s-<return>") 'toggle-frame-fullscreen)
 #+end_src
 
+*** Move between windows
 
 Enable windmove keybingings. This slightly arcanely named setting
 means you can move between windows with ~shift-u/d/l/r~ rather than
@@ -383,7 +482,7 @@ cycling through with ~C-x o~ or the mouse.
     (windmove-default-keybindings))
 #+end_src
 
-** Which key
+*** Which key tooltips
 
 This package pops up a buffer containing all possible key combinations
 if you hit the start of a chord. I hope to one day not need this, but
@@ -399,20 +498,9 @@ doesn't get in my way when I'm doing normal things.
 
 #+end_src
 
-** Undo Tree.
+** Navigation, Search & Project Management
 
-This package is magical, it lets you see the entire edit history of
-your file as a tree instead of a linear series of changes. It also
-provides a way of visualising the tree, so you can get back basically
-any change you make while editing a file.
-
-#+begin_src emacs-lisp
-  (use-package undo-tree
-    :config (global-undo-tree-mode))
-
-#+end_src
-
-** Ripgrep
+*** Ripgrep
 
 for fast project searches, relies on the ~rg~ binary being somewhere
 on your path.
@@ -421,29 +509,7 @@ on your path.
   (use-package ripgrep)
 #+end_src
 
-** Crux
-
-Crux really is a collection of really useful extensions! The ones I
-like are:
-
-- ~crux-move-beginning-of-line~ bounces between the first non
-  whitespace char in the line and the actual beginning of the line
-- ~crux-smart-open-line-above~ Inserts a new line above the point and
-  indents it according to the context. Basically the same as ~O~ in
-  Vim.
-- ~crux-smart-kill-line~ kills from the point to the end of the line,
-  then when pressed again, kills the rest of the line. Just means I
-  can usually hit ~C-k~ twice instead of ~C-a C-k~ which is quicker.
-
-#+begin_src emacs-lisp
-  (use-package crux
-    :bind (("C-a" . crux-move-beginning-of-line)
-           ("C-o" . crux-smart-open-line-above)
-           ("C-k" . crux-smart-kill-line)))
-
-#+end_src
-
-** TODO Flx
+*** Flx
 
 Not actually sure why this is here. It does fuzzy matching, but I
 think it's either pulled in as a dep of something or I don't use it
@@ -453,7 +519,7 @@ anymore.
   (use-package flx)
 #+end_src
 
-** TODO Ivy
+*** Ivy
 
 Ivy is a completion framework. So when you search for stuff it'll help
 you narrow down onto the result that you're looking for.
@@ -480,7 +546,6 @@ narrow down on the one I want.
                                                    (ivy-switch-buffer . ivy-sort-function-buffer)))
     (ivy-mode 1)
     (ivy-rich-mode 1))
-
 #+end_src
 
 I cargo-culted this init section from somewhere and I can't remember
@@ -493,7 +558,7 @@ what it fixes anymore.
     (setq xref-show-xrefs-function #'ivy-xref-show-xrefs))
 #+end_src
 
-** Imenu-list
+*** Imenu-list
 
 This is the most lightweight equivalent of Vim's [[https://github.com/preservim/tagbar][Tagbar plugin]] that I
 could find. It uses ~imenu-mode~ to breakdown a source file and show
@@ -507,7 +572,7 @@ Fair warning though. It seems to crap itself in ~org-mode~.
     :bind ("C-c C-t" . imenu-list-smart-toggle))
 #+end_src
 
-** Projectile
+*** Projectile
 
 #+begin_src emacs-lisp
   ;; Projectile spins trying to calculate what to write in the modeline when using TRAMP.
@@ -522,7 +587,7 @@ Fair warning though. It seems to crap itself in ~org-mode~.
     :config (projectile-rails-global-mode t))
 #+end_src
 
-** Direnv
+*** Direnv
 
 Direnv is heckin useful, I use it everywhere! You need the binary
 installed and set up in your shell, but then you can create a ~.envrc~
@@ -536,7 +601,7 @@ I use it mainly for setting cflags on various projects.
     :init (direnv-mode))
 #+end_src
 
-** Editorconfig
+*** Editorconfig
 
 Support the ubiquitous ~.editorconfig~ files that keep cropping up all
 over the place.
@@ -550,17 +615,9 @@ useful. And we use them at work, so I guess I'll just deal with it.
     :init (editorconfig-mode 1))
 #+end_src
 
-** Whitespace Butler
+** Programming Utilities
 
-Makes sure I don't accidentally commit loads of bad whitespace.
-
-#+begin_src
-  (use-package ws-butler
-    :init (setq ws-butler-keep-whitespace-before-point nil)
-    (ws-butler-global-mode))
-#+end_src
-
-** Company mode
+*** Company mode
 
 Company mode handles tab completion for me. Not much extra config
 here, mostly just the reduction of some delays, so it appears quicker,
@@ -579,7 +636,7 @@ what's being completed, and also can link out to docs.
 
 #+end_src
 
-** Magit
+*** Magit
 
 Magit mode is, imo, Emacs killer feature. Or at least on of the top
 ones. It's an amazing way of interacting with Git.
@@ -600,7 +657,141 @@ following the link and opening the original file in Emacs.
     :bind ("C-c s" . magit-status))
 #+end_src
 
-** Ruby
+*** LSP
+
+LSP configuration is slightly frustrating, because due to the way existence of a
+single lsp-client mode that talks to multiple lsp-servers I need to configure
+the servers here.
+
+This means that this lsp-mode config block contains config that's relevant to
+multiple different languages. Predominantly C, Ruby and Rust.
+
+#+begin_src emacs-lisp
+  (setq lsp-client-packages '(lsp-solargraph lsp-clangd lsp-rust-analyzer))
+
+  (use-package lsp-mode
+    :config (setq lsp-idle-delay 0.1
+                  lsp-headerline-breadcrumb-enable nil
+                  lsp-enable-on-type-formatting nil
+                  lsp-enable-indentation nil
+                  lsp-solargraph-formatting nil
+                  lsp-solargraph-diagnostics nil
+                  lsp-diagnostics-provider nil
+                  lsp-solargraph-hover nil
+                  lsp-rust-analyzer-cargo-watch-command "clippy"
+                  lsp-rust-analyzer-server-display-inlay-hints t)
+    (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
+    :hook ((c-mode . lsp)
+           (c++-mode . lsp)
+           (rustic-mode . lsp))
+    :after (which-key)
+    :bind (("<mouse-4>" . lsp-find-definition)
+           ("<mouse-5>" . xref-pop-marker-stack))
+    :bind-keymap ("M-l" . lsp-command-map))
+
+  (use-package lsp-ivy
+    :bind ("M-t" . 'lsp-ivy-workspace-symbol)
+    :config (advice-add 'lsp-ivy--goto-symbol :before
+                        (lambda (arg)
+                          (xref-push-marker-stack))))
+
+  (use-package ivy-xref
+    :init
+    ;; xref initialization is different in Emacs 27 - there are two different
+    ;; variables which can be set rather than just one
+    (when (>= emacs-major-version 27)
+      (setq xref-show-definitions-function #'ivy-xref-show-defs))
+    ;; Necessary in Emacs <27. In Emacs 27 it will affect all xref-based
+    ;; commands other than xref-find-definitions (e.g. project-find-regexp)
+    ;; as well
+    (setq xref-show-xrefs-function #'ivy-xref-show-xrefs))
+
+
+  (use-package lsp-ui
+    :config (setq lsp-ui-sideline-mode nil
+                  lsp-ui-flycheck-live-reporting nil
+                  lsp-ui-sideline-enable nil
+                  lsp-ui-sideline-show-diagnostics nil)
+    :bind (:map
+           lsp-ui-mode-map
+           ([remap xref-find-definitions] . #'lsp-ui-peek-find-definitions)
+           ([remap xref-find-references] . #'lsp-ui-peek-find-references)))
+
+#+end_src
+
+*** Treemacs
+
+A left hand sidebar for file navigation and a directory tree, like
+basically every editor ever.
+
+I wonder what the first editor to actually adopt this paradigm was? I
+wonder if it was Emacs? I remember it from using Bluefish back in
+2003? Maybe. I might even have been using Slackware!
+
+Anyway. I change the treemacs faces to be not monospace because it
+looks prettier.
+
+Treat ~node_modules~ ~.venv~ and ~.cask~ as garbage and don't show them.
+
+#+begin_src emacs-lisp
+  (use-package treemacs
+    :init (with-eval-after-load 'winum
+            (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
+    :config (progn
+              (setq treemacs-litter-directories '("/node_modules" "/.venv" "/.cask"))
+              (treemacs-follow-mode t)
+              (treemacs-filewatch-mode t)
+              (treemacs-fringe-indicator-mode 'always)
+
+              (treemacs-hide-gitignored-files-mode nil)
+              (dolist (face '(treemacs-root-face
+                              treemacs-git-unmodified-face
+                              treemacs-git-modified-face
+                              treemacs-git-renamed-face
+                              treemacs-git-ignored-face
+                              treemacs-git-untracked-face
+                              treemacs-git-added-face
+                              treemacs-git-conflict-face
+                              treemacs-directory-face
+                              treemacs-directory-collapsed-face
+                              treemacs-file-face
+                              treemacs-tags-face))
+                (set-face-attribute face nil :family "Helvetica Neue" :height 140)))
+    :bind (:map global-map
+                ("M-0"       . treemacs-select-window)
+                ("C-x t 1"   . treemacs-delete-other-windows)
+                ("C-x t t"   . treemacs)
+                ("C-x t d"   . treemacs-select-directory)
+                ("C-x t B"   . treemacs-bookmark)
+                ("C-x t C-t" . treemacs-find-file)
+                ("C-x t M-t" . treemacs-find-tag)))
+
+  (use-package treemacs-projectile
+    :after (treemacs projectile))
+
+  (use-package treemacs-magit
+    :after (treemacs magit))
+
+  (use-package lsp-treemacs
+    :init (lsp-treemacs-sync-mode 1))
+
+#+end_src
+
+This I cargo culted from somewhere and I don't know what it does.
+
+#+begin_src emacs-lisp
+  (use-package treemacs-persp ;;treemacs-perspective if you use perspective.el vs. persp-mode
+    :after (treemacs persp-mode) ;;or perspective vs. persp-mode
+    :config (treemacs-set-scope-type 'Perspectives))
+
+  (use-package treemacs-tab-bar ;;treemacs-tab-bar if you use tab-bar-mode
+    :after (treemacs)
+    :config (treemacs-set-scope-type 'Tabs))
+#+end_src
+
+** Language Modes
+
+*** Ruby
 
 Some of the codebases I use often require frozen strings. So this convenience
 function will add the magic header if it's not already there.
@@ -688,7 +879,7 @@ And some other things that I need to look into
                   case-fold-search t))
 #+end_src
 
-** C
+*** C
 
 The Ruby core team maintain an emacs style mode inside the main CRuby source
 tree to help format the Ruby codebase according to their programming style
@@ -705,139 +896,7 @@ should require the ruby-style file.
           (require 'ruby-style))))
 #+end_src
 
-** LSP
-
-LSP configuration is slightly frustrating, because due to the way existence of a
-single lsp-client mode that talks to multiple lsp-servers I need to configure
-the servers here.
-
-This means that this lsp-mode config block contains config that's relevant to
-multiple different languages. Predominantly C, Ruby and Rust.
-
-#+begin_src emacs-lisp
-  (setq lsp-client-packages '(lsp-solargraph lsp-clangd lsp-rust-analyzer))
-
-  (use-package lsp-mode
-    :config (setq lsp-idle-delay 0.1
-                  lsp-headerline-breadcrumb-enable nil
-                  lsp-enable-on-type-formatting nil
-                  lsp-enable-indentation nil
-                  lsp-solargraph-formatting nil
-                  lsp-solargraph-diagnostics nil
-                  lsp-diagnostics-provider nil
-                  lsp-solargraph-hover nil
-                  lsp-rust-analyzer-cargo-watch-command "clippy"
-                  lsp-rust-analyzer-server-display-inlay-hints t)
-    (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
-    :hook ((c-mode . lsp)
-           (c++-mode . lsp)
-           (rustic-mode . lsp))
-    :after (which-key)
-    :bind (("<mouse-4>" . lsp-find-definition)
-           ("<mouse-5>" . xref-pop-marker-stack))
-    :bind-keymap ("M-l" . lsp-command-map))
-
-  (use-package lsp-ivy
-    :bind ("M-t" . 'lsp-ivy-workspace-symbol)
-    :config (advice-add 'lsp-ivy--goto-symbol :before
-                        (lambda (arg)
-                          (xref-push-marker-stack))))
-
-  (use-package ivy-xref
-    :init
-    ;; xref initialization is different in Emacs 27 - there are two different
-    ;; variables which can be set rather than just one
-    (when (>= emacs-major-version 27)
-      (setq xref-show-definitions-function #'ivy-xref-show-defs))
-    ;; Necessary in Emacs <27. In Emacs 27 it will affect all xref-based
-    ;; commands other than xref-find-definitions (e.g. project-find-regexp)
-    ;; as well
-    (setq xref-show-xrefs-function #'ivy-xref-show-xrefs))
-
-
-  (use-package lsp-ui
-    :config (setq lsp-ui-sideline-mode nil
-                  lsp-ui-flycheck-live-reporting nil
-                  lsp-ui-sideline-enable nil
-                  lsp-ui-sideline-show-diagnostics nil)
-    :bind (:map
-           lsp-ui-mode-map
-           ([remap xref-find-definitions] . #'lsp-ui-peek-find-definitions)
-           ([remap xref-find-references] . #'lsp-ui-peek-find-references)))
-
-#+end_src
-
-** TODO Treemacs
-
-A left hand sidebar for file navigation and a directory tree, like
-basically every editor ever.
-
-I wonder what the first editor to actually adopt this paradigm was? I
-wonder if it was Emacs? I remember it from using Bluefish back in
-2003? Maybe. I might even have been using Slackware!
-
-Anyway. I change the treemacs faces to be not monospace because it
-looks prettier.
-
-Treat ~node_modules~ ~.venv~ and ~.cask~ as garbage and don't show them.
-
-#+begin_src emacs-lisp
-  (use-package treemacs
-    :init (with-eval-after-load 'winum
-            (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
-    :config (progn
-              (setq treemacs-litter-directories '("/node_modules" "/.venv" "/.cask"))
-              (treemacs-follow-mode t)
-              (treemacs-filewatch-mode t)
-              (treemacs-fringe-indicator-mode 'always)
-
-              (treemacs-hide-gitignored-files-mode nil)
-              (dolist (face '(treemacs-root-face
-                              treemacs-git-unmodified-face
-                              treemacs-git-modified-face
-                              treemacs-git-renamed-face
-                              treemacs-git-ignored-face
-                              treemacs-git-untracked-face
-                              treemacs-git-added-face
-                              treemacs-git-conflict-face
-                              treemacs-directory-face
-                              treemacs-directory-collapsed-face
-                              treemacs-file-face
-                              treemacs-tags-face))
-                (set-face-attribute face nil :family "Helvetica Neue" :height 140)))
-    :bind (:map global-map
-                ("M-0"       . treemacs-select-window)
-                ("C-x t 1"   . treemacs-delete-other-windows)
-                ("C-x t t"   . treemacs)
-                ("C-x t d"   . treemacs-select-directory)
-                ("C-x t B"   . treemacs-bookmark)
-                ("C-x t C-t" . treemacs-find-file)
-                ("C-x t M-t" . treemacs-find-tag)))
-
-  (use-package treemacs-projectile
-    :after (treemacs projectile))
-
-  (use-package treemacs-magit
-    :after (treemacs magit))
-
-  (use-package lsp-treemacs
-    :init (lsp-treemacs-sync-mode 1))
-
-#+end_src
-
-This I cargo culted from somewhere and I don't know what it does.
-
-#+begin_src emacs-lisp
-  (use-package treemacs-persp ;;treemacs-perspective if you use perspective.el vs. persp-mode
-    :after (treemacs persp-mode) ;;or perspective vs. persp-mode
-    :config (treemacs-set-scope-type 'Perspectives))
-
-  (use-package treemacs-tab-bar ;;treemacs-tab-bar if you use tab-bar-mode
-    :after (treemacs)
-    :config (treemacs-set-scope-type 'Tabs))
-#+end_src
-
-** Rust
+*** Rust
 
 - [ ] Remove or explain the cargo-culted rustic-mode-hook
 
@@ -868,7 +927,7 @@ Most of the useful stuff is actually defined in the lsp-mode section.
       (setq-local buffer-save-without-query t)))
 #+end_src
 
-** Web Mode
+*** Web (js/html/css)
 
 I don't do much web stuff anymore so this may not be the most up to date way of
 handling this. I basically just bring in web-mode by default for a bunch of
@@ -891,7 +950,7 @@ files that look a lot like they could be web adjacent and configure a consistent
           (setq web-mode-enable-auto-indentation nil))
 #+end_src
 
-** Markup languages
+*** Markup (Markdown/toml/yaml)
 
 Import the packages and associate the right file types required to write content
 in Markdown, Toml and Yaml.
@@ -918,7 +977,7 @@ favours.
 
 #+end_src
 
-** Org Mode for journalling and publishing
+** Org Mode
 
 The org mode package has already been installed from the package repos in the
 early-init file, so that we could use the latest version to tangle this file
@@ -951,6 +1010,9 @@ Now I can move windows with shift+arrows no matter the buffer type
     :mode ("\\.org" . org-mode))
 #+end_src
 
+
+*** Journal
+
 I also use org-journal to document my days. It's configured to start a new
 journal file per day in a folder in my home directory.
 
@@ -965,6 +1027,8 @@ file.
               (org-journal-date-format "%A %d %b %Y")
               (org-agenda-files "~/Documents/org/"))
 #+end_src
+
+*** Blogging
 
 The following section is an experiment to see whether I can configure and live
 with a staticly generated blog/website entirely done within Emacs.
@@ -1040,7 +1104,9 @@ This is still **in progress**
 
 #+end_src
 
-** Music with MPC and MPD
+** Audio
+
+*** MPD client
 
 Here we configure the built-in mpc-mode to connect to a running Mopidy server on
 my home network desktop machine "senjougahara".

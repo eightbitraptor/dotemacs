@@ -189,29 +189,59 @@ Use y/n in prompts instead of having to explicitly type yes or no
   (fset 'yes-or-no-p 'y-or-n-p)
 #+end_src
 
+I always used to smash these keys accidentally and they'd do random
+stuff. I was bad at typing!
+
+I don't think I've had this problem since I changed to using split
+ergo keyboards, so I'm not sure whether it's still relevant or
+not. At some point I'll get around to testing that...
+
 #+begin_src emacs-lisp
   (when window-system
     ((lambda ()
        (global-unset-key "\C-z")
        (global-unset-key "\C-x\C-z"))))
+#+end_src
 
+Default to 4 spaces as an indent everywhere. Obviously other modes are
+going to override this as necessary, but I like a 4 space indent
+generally.
+
+#+begin_src emacs-lisp
+  (setq-default indent-tabs-mode nil)
+
+  (setq-default c-basic-offset 4)
+#+end_src
+
+And turn on ~delete-selection-mode~. This makes emacs visual selection
+behave much more like "modern" editors. ie. when you select stuff and
+start typing your text will _replace_ the selected text, and you can
+highlight text and then hit backspace to delete it.
+
+Without this minor mode enabled Emacs will start inserting text
+wherever the point is located (often at the end of the selection), and
+not actually remove the seletion.
+
+#+begin_src emacs-lisp
+  (delete-selection-mode t)
+#+end_src
+
+** Helper Functions
+
+A few things that I've found useful over the years. They should
+already be pretty well documented - just checkout the function
+documentation.
+
+#+begin_src emacs-lisp
   (defun kill-other-buffers ()
-    "Kill other buffers that are associated with files."
+    "Make the current buffer the only focus, and kill other buffers
+  that are associated with files."
     (interactive)
+    (delete-other-windows)
     (mapc 'kill-buffer
           (delq (current-buffer)
                 (remove nil (mapcar #'(lambda (b) (when (buffer-file-name b) b))
                                     (buffer-list))))))
-
-  (defun open-line-above ()
-    "Open a line above the line the point is at. Then move to that line and indent according to mode"
-    (interactive)
-    (indent-according-to-mode)
-    (move-beginning-of-line 1)
-    (newline)
-    (previous-line)
-    (indent-according-to-mode))
-  (global-set-key (kbd "C-o") 'open-line-above)
 
   (defun duplicate-line (arg)
     "Duplicate current line, leaving point in lower line."
@@ -244,7 +274,6 @@ Use y/n in prompts instead of having to explicitly type yes or no
 
     ;; put the point in the lowest line and return
     (next-line arg))
-  (global-set-key (kbd "C-d") 'duplicate-line)
 
   (defun my-alter-frame-font-size (fn)
     (let* ((current-font-name (frame-parameter nil 'font))
@@ -260,41 +289,146 @@ Use y/n in prompts instead of having to explicitly type yes or no
   (defun my-dec-frame-font-size ()
     (interactive)
     (my-alter-frame-font-size '1-))
+#+end_src
 
+** Global keybingings
+
+First map some of the aformentioned custom functions.
+
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-d") 'duplicate-line)
   (global-set-key (kbd "C-+") 'my-inc-frame-font-size)
   (global-set-key (kbd "C-=") 'my-inc-frame-font-size)
   (global-set-key (kbd "C--") 'my-dec-frame-font-size)
+#+end_src
 
+This is something I learned from [[https://sites.google.com/site/steveyegge2/effective-emacs][Steve Yegge's excellent blog post
+about effective Emacs]] - Use a key combo for ~M-x~ that doesn't
+involve the ~Alt~ key as it's non standard across environments and
+requires some weird hand scrunching to type properly.
+
+I also like ~C-x C-m~ as it has as kind of tempo to it (command
+sequences having tempo is a really nice idea I learned about in [[https://www.masteringemacs.org/][Mickey
+Peterson's Mastering Emacs book]] back in the day.
+
+#+begin_src emacs-lisp
   (global-set-key "\C-x\C-m" 'execute-extended-command)
   (global-set-key "\C-c\C-m" 'execute-extended-command)
+#+end_src
 
+Some keybindings for resizing Windows. I can't remember when I last
+used these but you know I'd need them if I ever got rid of them so
+here they are.
+
+#+begin_src emacs-lisp
   (global-set-key (kbd "s-<left>")  'shrink-window-horizontally)
   (global-set-key (kbd "s-<right>") 'enlarge-window-horizontally)
   (global-set-key (kbd "s-<up>")    'enlarge-window)
   (global-set-key (kbd "s-<down>")  'shrink-window)
+#+end_src
 
+Embiggenate Frame!
+
+#+begin_src emacs-lisp
   (global-set-key (kbd "s-<return>") 'toggle-frame-fullscreen)
+#+end_src
 
-  (setq-default indent-tabs-mode nil)
 
-  (setq-default c-basic-offset 4)
-  (delete-selection-mode t)
+Enable windmove keybingings. This slightly arcanely named setting
+means you can move between windows with ~shift-u/d/l/r~ rather than
+cycling through with ~C-x o~ or the mouse.
 
-  ;;; Navigation and Search
+#+begin_src emacs-lisp
+  (when (fboundp 'windmove-default-keybindings)
+    (windmove-default-keybindings))
+#+end_src
 
+** Which key
+
+This package pops up a buffer containing all possible key combinations
+if you hit the start of a chord. I hope to one day not need this, but
+it's stupidly useful when using stuff I don't normally use everyday.
+
+I've set the delay to be quite long at 3s, just to make sure it
+doesn't get in my way when I'm doing normal things.
+
+#+begin_src emacs-lisp
   (use-package which-key
     :config (which-key-mode)
             (setq which-key-idle-delay 3))
 
+#+end_src
+
+** Undo Tree.
+
+This package is magical, it lets you see the entire edit history of
+your file as a tree instead of a linear series of changes. It also
+provides a way of visualising the tree, so you can get back basically
+any change you make while editing a file.
+
+#+begin_src emacs-lisp
   (use-package undo-tree
     :config (global-undo-tree-mode))
 
-  (use-package ripgrep)
+#+end_src
 
-  (use-package ag)
+** Ripgrep
+
+for fast project searches, relies on the ~rg~ binary being somewhere
+on your path.
+
+#+begin_src emacs-lisp
+  (use-package ripgrep)
+#+end_src
+
+** Crux
+
+Crux really is a collection of really useful extensions! The ones I
+like are:
+
+- ~crux-move-beginning-of-line~ bounces between the first non
+  whitespace char in the line and the actual beginning of the line
+- ~crux-smart-open-line-above~ Inserts a new line above the point and
+  indents it according to the context. Basically the same as ~O~ in
+  Vim.
+- ~crux-smart-kill-line~ kills from the point to the end of the line,
+  then when pressed again, kills the rest of the line. Just means I
+  can usually hit ~C-k~ twice instead of ~C-a C-k~ which is quicker.
+
+#+begin_src emacs-lisp
   (use-package crux
-      :bind (("C-a" . crux-move-beginning-of-line)))
+    :bind (("C-a" . crux-move-beginning-of-line)
+           ("C-o" . crux-smart-open-line-above)
+           ("C-k" . crux-smart-kill-line)))
+
+#+end_src
+
+** TODO Flx
+
+Not actually sure why this is here. It does fuzzy matching, but I
+think it's either pulled in as a dep of something or I don't use it
+anymore.
+
+#+begin_src emacs-lisp
   (use-package flx)
+#+end_src
+
+** TODO Ivy
+
+Ivy is a completion framework. So when you search for stuff it'll help
+you narrow down onto the result that you're looking for.
+
+A nice write-up about it lives [[https://sam217pa.github.io/2016/09/13/from-helm-to-ivy/][here]]. And the manual is [[https://oremacs.com/swiper/][here]].
+
+I use it in conjunction with ~ivy-rich~ which makes the UI column
+based to show more information.
+
+I also use it in conjunction with ~xref~ so that when I do things like
+jumping between functions or searching for functions in source code, I
+get a nice looking list of functions and meta data about them and can
+narrow down on the one I want.
+
+#+begin_src emacs-lisp
   (use-package ivy-rich)
   (use-package counsel)
 
@@ -304,55 +438,125 @@ Use y/n in prompts instead of having to explicitly type yes or no
                                                    (ivy-completion-in-region . ivy--shorter-matches-first)
                                                    (execute-extended-command . ivy--shorter-matches-first)
                                                    (ivy-switch-buffer . ivy-sort-function-buffer)))
-          (ivy-mode 1)
-          (ivy-rich-mode 1))
+    (ivy-mode 1)
+    (ivy-rich-mode 1))
 
+#+end_src
+
+I cargo-culted this init section from somewhere and I can't remember
+what it fixes anymore.
+
+#+begin_src emacs-lisp
   (use-package ivy-xref
     :init (when (>= emacs-major-version 27)
             (setq xref-show-definitions-function #'ivy-xref-show-defs))
     (setq xref-show-xrefs-function #'ivy-xref-show-xrefs))
+#+end_src
 
+** Imenu-list
+
+This is the most lightweight equivalent of Vim's [[https://github.com/preservim/tagbar][Tagbar plugin]] that I
+could find. It uses ~imenu-mode~ to breakdown a source file and show
+you a list of Classes, structures functions and whatnot in a vertical
+bar on the right of the frame.
+
+Fair warning though. It seems to crap itself in ~org-mode~.
+
+#+begin_src emacs-lisp
   (use-package imenu-list
     :bind ("C-c C-t" . imenu-list-smart-toggle))
+#+end_src
 
+** Projectile
+
+#+begin_src emacs-lisp
   ;; Projectile spins trying to calculate what to write in the modeline when using TRAMP.
   ;; forcing a static modeline causes tramp mode to get fast again
   (use-package projectile
     :config (setq projectile-dynamic-mode-line nil)
-            (projectile-global-mode)
+    (projectile-global-mode)
     :bind-keymap ("C-c p" . projectile-command-map)
     :init (setq projectile-completion-system 'ivy))
 
   (use-package projectile-rails
     :config (projectile-rails-global-mode t))
+#+end_src
 
-  (when (fboundp 'windmove-default-keybindings)
-    (windmove-default-keybindings))
+** Direnv
 
-  ;;; Code utilities (completion, whitespace management, Git etc)
+Direnv is heckin useful, I use it everywhere! You need the binary
+installed and set up in your shell, but then you can create a ~.envrc~
+file in a directory, export shell variables in it, and they're only
+applied when you're in that directory.
 
+I use it mainly for setting cflags on various projects.
+
+#+begin_src emacs-lisp
   (use-package direnv
     :init (direnv-mode))
+#+end_src
 
+** Editorconfig
+
+Support the ubiquitous ~.editorconfig~ files that keep cropping up all
+over the place.
+
+Personally I'm a little uncomfortable about other people having
+control over my editor settings, but there's no doubt they are
+useful. And we use them at work, so I guess I'll just deal with it.
+
+#+begin_src emacs-lisp
   (use-package editorconfig
     :init (editorconfig-mode 1))
+#+end_src
 
+** Whitespace Butler
+
+Makes sure I don't accidentally commit loads of bad whitespace.
+
+#+begin_src
   (use-package ws-butler
     :init (setq ws-butler-keep-whitespace-before-point nil)
     (ws-butler-global-mode))
+#+end_src
 
+** Company mode
+
+Company mode handles tab completion for me. Not much extra config
+here, mostly just the reduction of some delays, so it appears quicker,
+and the addition of company box, which is analagous to ivy-rich for
+ivy. It pretties up the UI, and provides icons and stuff depending on
+what's being completed, and also can link out to docs.
+
+#+begin_src emacs-lisp
   (use-package company
     :init (setq company-dabbrev-downcase 0)
-          (setq company-idle-delay 0)
+    (setq company-idle-delay 0)
     :config (global-company-mode))
 
   (use-package company-box
     :hook (company-mode . company-box-mode))
 
+#+end_src
+
+** Magit
+
+Magit mode is, imo, Emacs killer feature. Or at least on of the top
+ones. It's an amazing way of interacting with Git.
+
+No config to really note - I've set the magit status window to take up
+the whole frame, because when I context switch into Git mode I like to
+focus fully on it.
+
+I've also enabled ~vc-follow-symlinks~ which helps out if you ever try
+and edit a symlink pointing to a file under source control, by
+following the link and opening the original file in Emacs.
+
+#+begin_src emacs-lisp
   (setq vc-follow-symlinks t)
   (use-package magit
     :init (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
-          (setq magit-push-current-set-remote-if-missing nil)
+    (setq magit-push-current-set-remote-if-missing nil)
     :bind ("C-c s" . magit-status))
 #+end_src
 
@@ -489,6 +693,8 @@ multiple different languages. Predominantly C, Ruby and Rust.
            (c++-mode . lsp)
            (rustic-mode . lsp))
     :after (which-key)
+    :bind (("<mouse-4>" . lsp-find-definition)
+           ("<mouse-5>" . xref-pop-marker-stack))
     :bind-keymap ("M-l" . lsp-command-map))
 
   (use-package lsp-ivy
@@ -688,11 +894,12 @@ Each new entry in the same day gets a new timestamped org mode heading in that
 file.
 
 #+begin_src emacs-lisp
-  (use-package org-journal
-    :init (setq org-journal-prefix-key "C-c j ")
-    :custom (org-journal-dir "~/Documents/log_books/")
-            (org-journal-file-format "%Y%m%d")
-            (org-journal-date-format "%A %d %b %Y"))
+    (use-package org-journal
+      :init (setq org-journal-prefix-key "C-c j ")
+      :custom (org-journal-dir "~/Documents/org/log_books/")
+              (org-journal-file-format "%Y%m%d")
+              (org-journal-date-format "%A %d %b %Y")
+              (org-agenda-files "~/Documents/org/"))
 #+end_src
 
 The following section is an experiment to see whether I can configure and live

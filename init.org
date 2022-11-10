@@ -3,12 +3,19 @@
 #+STARTUP overview
 
 * Emacs config - eightbitraptor
+
+This is the latest incarnation of my emacs config. It's been built up, torn
+down, refactored and rebuilt many times since I started using Emacs (the
+earliest reference I can find is a really ugly screenshot of my work Mac circa
+2011 - a long time before I knew remotely what I was doing :|).
+
+* Contents
 :PROPERTIES:
 :TOC: :include all
 :END:
-
 :CONTENTS:
 - [[#emacs-config---eightbitraptor][Emacs config - eightbitraptor]]
+- [[#contents][Contents]]
   - [[#pre-initialisation-early-initel][Pre-initialisation (early-init.el)]]
     - [[#notes-for-initial-setup][Notes for initial setup]]
   - [[#setting-up-the-path][Setting up the PATH]]
@@ -39,11 +46,6 @@
   - [[#org-mode-for-journalling-and-publishing][Org Mode for journalling and publishing]]
   - [[#music-with-mpc-and-mpd][Music with MPC and MPD]]
 :END:
-
-This is the latest incarnation of my emacs config. It's been built up, torn
-down, refactored and rebuilt many times since I started using Emacs (the
-earliest reference I can find is a really ugly screenshot of my work Mac circa
-2011 - a long time before I knew remotely what I was doing :|).
 
 
 ** Pre-initialisation (early-init.el)

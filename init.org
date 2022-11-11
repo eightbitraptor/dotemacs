@@ -823,16 +823,26 @@ function will add the magic header if it's not already there.
 
 I prefer to use rbenv to manage my Ruby versions, in conjunction with
 ruby-build. rbenv is pretty easy to understand, and whilst I'm not wild about
-the shims, it is working well for me.
+the shims, it is working well for me. Work however, are all in on
+chruby and some of the bits of software I need to integrate with
+require it.
+
+So I'll use chruby mode when I have to, on my Shopify machine, and
+rbenv everywhere else
 
 I also use minitest for testing.
 
-#+begin_src emacs-lisp
-  (use-package rbenv
-    :init (global-rbenv-mode)
-          (rbenv-use-global))
+(system-name)
 
-  (use-package minitest :ensure t)
+#+begin_src emacs-lisp
+  (if (string-match "Shopify" (system-name))
+      (use-package chruby
+        :init (chruby "ruby_3_1"))
+    (use-package rbenv
+        :init (global-rbenv-mode)
+        (rbenv-use-global)))
+
+    (use-package minitest :ensure t)
 #+end_src
 
 I use enh-ruby-mode instead of the built in ruby-mode. This is entirely due to
@@ -1023,6 +1033,19 @@ Now I can move windows with shift+arrows no matter the buffer type
     :mode ("\\.org" . org-mode))
 #+end_src
 
+*** Quick notes (with Denote)
+
+I often use the Apple Notes app to take super fast notes on stuff,
+that I can look back on later, snippets of debug commands and whatnot.
+
+I'd like to use Emacs to do this so I don't have to leave the editor
+so I'm testing out ~denote~.
+
+#+begin_src emacs-lisp
+  (use-package denote
+    :custom (denote-directory "~/Documents/org/notes/")
+    :bind ("C-x C-n" . denote))
+#+end_src
 
 *** Journal
 

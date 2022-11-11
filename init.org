@@ -1075,7 +1075,7 @@ to post less.
 
 This is still **in progress**
 
-#+begin_src
+#+begin_src emacs-lisp
   (use-package org-static-blog
     :init
     (setq org-static-blog-use-preview t

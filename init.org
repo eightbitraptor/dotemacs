@@ -69,6 +69,7 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
     - [[#blogging][Blogging]]
   - [[#audio][Audio]]
     - [[#mpd-client][MPD client]]
+  - [[#emacs-server][Emacs server]]
 :END:
 
 
@@ -482,6 +483,14 @@ here they are.
 
 #+begin_src emacs-lisp
   (global-set-key (kbd "s-<return>") 'toggle-frame-fullscreen)
+#+end_src
+
+*** Delete frames
+
+With Emacs server running
+
+#+begin_src emacs-lisp
+  (global-set-key (kbd "M-∑") 'delete-frame)
 #+end_src
 
 *** Move between windows
@@ -1220,4 +1229,14 @@ I usually listen to Albums, so my workflow looks a bit like this:
                 ("P" . mpc-playlist)
                 ("s" . mpc-select)
                 ("S" . mpc-stop)))
+#+end_src
+
+** Emacs server
+
+Finally we'll start a server attached to this GUI instance so that I
+can use ~emacsclient~ in the terminal to open stuff in this instance.
+
+#+begin_src emacs-lisp
+  (use-package server
+    :init (server-start))
 #+end_src

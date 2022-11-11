@@ -22,6 +22,7 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
   - [[#general-editor-settings][General Editor Settings]]
     - [[#setting-up-the-path][Setting up the PATH]]
     - [[#no-littering][No littering]]
+    - [[#fish-mode][Fish mode]]
     - [[#organise-backup-files][Organise backup files]]
     - [[#theming-and-aesthetics][Theming and Aesthetics]]
     - [[#line-lengths][Line Lengths]]
@@ -136,6 +137,15 @@ files that Emacs and other packages would otherwise just dump directly into
   (use-package no-littering)
 #+end_src
 
+
+*** Fish mode
+
+I use the [[https://fishshell.com/][Fish shell]]. So I install the major mode for editing config
+files.
+
+#+begin_src emacs-lisp
+  (use-package fish-mode)
+#+end_src
 
 *** Organise backup files
 

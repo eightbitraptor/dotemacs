@@ -43,6 +43,7 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
     - [[#remap-m-x][Remap M-x]]
     - [[#resizing-windows][Resizing windows]]
     - [[#maximise-frames][Maximise frames]]
+    - [[#delete-frames][Delete frames]]
     - [[#move-between-windows][Move between windows]]
     - [[#which-key-tooltips][Which key tooltips]]
   - [[#navigation-search--project-management][Navigation, Search & Project Management]]

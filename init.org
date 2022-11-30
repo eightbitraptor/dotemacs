@@ -421,7 +421,7 @@ documentation.
 Useful when sharing my screen on a vidoe call so the font can be
 legible on the recording.
 
-#+begin_src
+#+begin_src emacs-lisp
   (defun my-alter-frame-font-size (fn)
     (let* ((current-font-name (frame-parameter nil 'font))
            (decomposed-font-name (x-decompose-font-name current-font-name))

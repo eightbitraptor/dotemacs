@@ -23,6 +23,7 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
     - [[#setting-up-the-path][Setting up the PATH]]
     - [[#no-littering][No littering]]
     - [[#fish-mode][Fish mode]]
+    - [[#dirvish][Dirvish]]
     - [[#organise-backup-files][Organise backup files]]
     - [[#theming-and-aesthetics][Theming and Aesthetics]]
     - [[#line-lengths][Line Lengths]]
@@ -148,6 +149,15 @@ files.
 
 #+begin_src emacs-lisp
   (use-package fish-mode)
+#+end_src
+
+*** Dirvish
+
+Is a more fully featured dired mode. Let's try it out for a bit
+
+#+begin_src emacs-lisp
+  (use-package dirvish
+    :init (dirvish-override-dired-mode))
 #+end_src
 
 *** Organise backup files

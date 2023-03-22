@@ -611,9 +611,12 @@ bar on the right of the frame.
 
 Fair warning though. It seems to crap itself in ~org-mode~.
 
+While we're here let's configure ~M-t~ to use trigger imenu.
+
 #+begin_src emacs-lisp
   (use-package imenu-list
     :bind ("C-c C-t" . imenu-list-smart-toggle))
+  (global-set-key (kbd "M-t") 'imenu)
 #+end_src
 
 *** Projectile

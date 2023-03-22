@@ -263,9 +263,19 @@ everything renders fonts differently and at different sizes.
 Break all long lines automatically at ~fill-column~ so I don't have to press
 ~M-q~ all the time. And then set ~fill-column~ to 80 chars, because 70 is a bit short.
 
+Because I enable ~auto-fill-mode~ I also provide a convenience
+function, bound to ~C-c u~ to unfill any paragrahs that get broken
+when I don't want them to be.
+
 #+begin_src emacs-lisp
   (add-hook 'text-mode-hook 'turn-on-auto-fill)
   (set-fill-column 80)
+
+  (defun unfill-paragraph ()
+    (interactive)
+    (let ((fill-column (point-max)))
+      (fill-paragraph nil)))
+  (global-set-key (kbd "C-u") 'unfill-paragraph)
 #+end_src
 
 *** Mouse Scrolling

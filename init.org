@@ -673,13 +673,14 @@ ivy. It pretties up the UI, and provides icons and stuff depending on
 what's being completed, and also can link out to docs.
 
 #+begin_src emacs-lisp
-  (use-package company
-    :init (setq company-dabbrev-downcase 0)
-    (setq company-idle-delay 0)
-    :config (global-company-mode))
+    (use-package company
+      :init (setq company-dabbrev-downcase nil
+                  company-idle-delay 0
+                  company-dabbrev-ignore-case 1)
+      :config (global-company-mode))
 
-  (use-package company-box
-    :hook (company-mode . company-box-mode))
+    (use-package company-box
+      :hook (company-mode . company-box-mode))
 
 #+end_src
 

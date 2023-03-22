@@ -253,7 +253,7 @@ everything renders fonts differently and at different sizes.
          (set-face-attribute 'default nil :font "Jetbrains Mono 16"))
         ((eq (window-system) 'mac)
          (setq mac-frame-tabbing nil)
-         (set-face-attribute 'default nil :font "Jetbrains Mono 18"))
+         (set-face-attribute 'default nil :font "Jetbrains Mono 16"))
         ((eq (window-system) 'w32)
          (set-face-attribute 'default nil :font "Consolas 16")))
 #+end_src

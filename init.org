@@ -66,6 +66,7 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
     - [[#web-jshtmlcss][Web (js/html/css)]]
     - [[#markup-markdowntomlyaml][Markup (Markdown/toml/yaml)]]
   - [[#org-mode][Org Mode]]
+    - [[#quick-notes-with-denote][Quick notes (with Denote)]]
     - [[#journal][Journal]]
     - [[#blogging][Blogging]]
   - [[#audio][Audio]]

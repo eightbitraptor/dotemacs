@@ -714,6 +714,13 @@ the servers here.
 This means that this lsp-mode config block contains config that's relevant to
 multiple different languages. Predominantly C, Ruby and Rust.
 
+As a companion to using ~M-t~ to trigger ~imenu~ earlier in my
+config. We'll mape ~M-T~ here to ~lsp-ivy-workspace-symbol~ so we can
+use ~M-t~ when we want to fuzzy jump to a symbol in the buffer, and
+~M-T~ when we want to do the same but somwhere else in the
+project. This pretty closely my Vim config which uses ~<Space> t~ and
+~<Space> T~ for the same.
+
 #+begin_src emacs-lisp
   (setq lsp-client-packages '(lsp-solargraph lsp-clangd lsp-rust-analyzer))
 
@@ -738,7 +745,7 @@ multiple different languages. Predominantly C, Ruby and Rust.
     :bind-keymap ("M-l" . lsp-command-map))
 
   (use-package lsp-ivy
-    :bind ("M-t" . 'lsp-ivy-workspace-symbol)
+    :bind ("M-T" . 'lsp-ivy-workspace-symbol)
     :config (advice-add 'lsp-ivy--goto-symbol :before
                         (lambda (arg)
                           (xref-push-marker-stack))))

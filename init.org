@@ -195,8 +195,9 @@ To make solaire mode work, we need to install a theme that supports it. The
 Wilmersorf, from the ~doom-themes~ package.
 
 #+begin_src emacs-lisp
-  (use-package doom-themes
-    :init (load-theme 'doom-wilmersdorf t))
+    (use-package autothemer)
+    (use-package sakura-theme
+      :init (load-theme 'sakura t))
 #+end_src
 
 Then nyan cat as a progress bar in my modeline

@@ -741,8 +741,8 @@ project. This pretty closely my Vim config which uses ~<Space> t~ and
            (c++-mode . lsp)
            (rustic-mode . lsp))
     :after (which-key)
-    :bind (("<mouse-4>" . lsp-find-definition)
-           ("<mouse-5>" . xref-pop-marker-stack))
+    :bind (("<mouse-8>" . lsp-find-definition)
+           ("<mouse-9>" . xref-pop-marker-stack))
     :bind-keymap ("M-l" . lsp-command-map))
 
   (use-package lsp-ivy

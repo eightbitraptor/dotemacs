@@ -58,7 +58,7 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
   - [[#programming-utilities][Programming Utilities]]
     - [[#company-mode][Company mode]]
     - [[#magit][Magit]]
-    - [[#ctags-citre][Ctags (Citre)]]
+    - [[#lsp][LSP]]
     - [[#treemacs][Treemacs]]
   - [[#language-modes][Language Modes]]
     - [[#ruby][Ruby]]
@@ -706,31 +706,73 @@ following the link and opening the original file in Emacs.
     :bind ("C-c s" . magit-status))
 #+end_src
 
-*** Ctags (Citre)
+*** LSP
 
-Citre is a frontend for Ctags, and I'm currently experimenting with
-this as a replacement for LSP Mode, as I'm having stability and speed
-problems with clangd on the CRuby codebase.
+LSP configuration is slightly frustrating, because due to the way existence of a
+single lsp-client mode that talks to multiple lsp-servers I need to configure
+the servers here.
 
-This config currently is almost exactly copy pasted from the Citre
-README, so it's not massively useful.
+This means that this lsp-mode config block contains config that's relevant to
+multiple different languages. Predominantly C, Ruby and Rust.
+
+As a companion to using ~M-t~ to trigger ~imenu~ earlier in my
+config. We'll mape ~M-T~ here to ~lsp-ivy-workspace-symbol~ so we can
+use ~M-t~ when we want to fuzzy jump to a symbol in the buffer, and
+~M-T~ when we want to do the same but somwhere else in the
+project. This pretty closely my Vim config which uses ~<Space> t~ and
+~<Space> T~ for the same.
 
 #+begin_src emacs-lisp
-  (use-package citre
-    :init (require 'citre-config)
-    ;; Bind your frequently used commands.  Alternatively, you can define them
-    ;; in `citre-mode-map' so you can only use them when `citre-mode' is enabled.
-    (global-set-key (kbd "C-x c j") 'citre-jump)
-    (global-set-key (kbd "C-x c J") 'citre-jump-back)
-    (global-set-key (kbd "C-x c p") 'citre-ace-peek)
-    (global-set-key (kbd "C-x c u") 'citre-update-this-tags-file)
-    :config
-    (setq
-     citre-project-root-function #'projectile-project-root
-     citre-default-create-tags-file-location 'global-cache
-     citre-use-project-root-when-creating-tags t
-     citre-prompt-language-for-ctags-command t
-     citre-auto-enable-citre-mode-modes '(prog-mode)))
+  (setq lsp-client-packages '(lsp-solargraph lsp-clangd lsp-rust-analyzer))
+
+  (use-package lsp-mode
+    :config (setq lsp-idle-delay 0.1
+                  lsp-headerline-breadcrumb-enable nil
+                  lsp-enable-on-type-formatting nil
+                  lsp-enable-indentation nil
+                  lsp-solargraph-formatting nil
+                  lsp-solargraph-diagnostics nil
+                  lsp-diagnostics-provider nil
+                  lsp-solargraph-hover nil
+                  lsp-rust-analyzer-cargo-watch-command "clippy"
+                  lsp-rust-analyzer-server-display-inlay-hints t)
+    (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
+    :hook ((c-mode . lsp)
+           (c++-mode . lsp)
+           (rustic-mode . lsp))
+    :after (which-key)
+    :bind (("<mouse-4>" . lsp-find-definition)
+           ("<mouse-5>" . xref-pop-marker-stack))
+    :bind-keymap ("M-l" . lsp-command-map))
+
+  (use-package lsp-ivy
+    :bind ("M-T" . 'lsp-ivy-workspace-symbol)
+    :config (advice-add 'lsp-ivy--goto-symbol :before
+                        (lambda (arg)
+                          (xref-push-marker-stack))))
+
+  (use-package ivy-xref
+    :init
+    ;; xref initialization is different in Emacs 27 - there are two different
+    ;; variables which can be set rather than just one
+    (when (>= emacs-major-version 27)
+      (setq xref-show-definitions-function #'ivy-xref-show-defs))
+    ;; Necessary in Emacs <27. In Emacs 27 it will affect all xref-based
+    ;; commands other than xref-find-definitions (e.g. project-find-regexp)
+    ;; as well
+    (setq xref-show-xrefs-function #'ivy-xref-show-xrefs))
+
+
+  (use-package lsp-ui
+    :config (setq lsp-ui-sideline-mode nil
+                  lsp-ui-flycheck-live-reporting nil
+                  lsp-ui-sideline-enable nil
+                  lsp-ui-sideline-show-diagnostics nil)
+    :bind (:map
+           lsp-ui-mode-map
+           ([remap xref-find-definitions] . #'lsp-ui-peek-find-definitions)
+           ([remap xref-find-references] . #'lsp-ui-peek-find-references)))
+
 #+end_src
 
 *** Treemacs

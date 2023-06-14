@@ -802,8 +802,6 @@ rbenv everywhere else
 
 I also use minitest for testing.
 
-(system-name)
-
 #+begin_src emacs-lisp
   (if (string-match "Shopify" (system-name))
       (use-package chruby

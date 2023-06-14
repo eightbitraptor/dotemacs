@@ -1,9 +1,5 @@
 ;; Switch to the most updated version of org as early as possible
-;;(add-to-list 'load-path (expand-file-name "~/Uniconfig/Settings/Emacs/straight/build/org"))
-
-;; Configure Emacs directories
-;;(setq user-emacs-directory (expand-file-name "~/Uniconfig/Settings/Emacs/"))
-;;(add-to-list 'custom-theme-load-path "~/.config/base16/el/")
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/straight/build/org"))
 
 ;; Disable package.el in favor of straight.el
 (setq package-enable-at-startup nil)

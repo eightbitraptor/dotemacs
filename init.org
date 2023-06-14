@@ -59,7 +59,6 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
     - [[#company-mode][Company mode]]
     - [[#magit][Magit]]
     - [[#lsp][LSP]]
-    - [[#treemacs][Treemacs]]
   - [[#language-modes][Language Modes]]
     - [[#ruby][Ruby]]
     - [[#c][C]]

@@ -279,6 +279,13 @@ when I don't want them to be.
   (global-set-key (kbd "C-u") 'unfill-paragraph)
 #+end_src
 
+Also enable a vertical ruler at 80 columns using
+~display-fill-column-indicator-mode~ everywhere.
+
+#+begin_src emacs-lisp
+  (global-display-fill-column-indicator-mode)
+#+end_src
+
 *** Mouse Scrolling
 
 This controls how many lines the mouse wheel scrolls by.

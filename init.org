@@ -750,7 +750,9 @@ project. This pretty closely my Vim config which uses ~<Space> t~ and
     :bind ("M-T" . 'lsp-ivy-workspace-symbol)
     :config (advice-add 'lsp-ivy--goto-symbol :before
                         (lambda (arg)
-                          (xref-push-marker-stack))))
+                          (xref-push-marker-stack)))
+            (advice-add 'lsp-find-definition :before (lambda () (xref-push-marker-stack))))
+
 
   (use-package ivy-xref
     :init

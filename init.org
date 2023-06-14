@@ -1026,7 +1026,7 @@ so I'm testing out ~denote~.
 
 #+begin_src emacs-lisp
   (use-package denote
-    :custom (denote-directory "~/Documents/org/notes/")
+    :custom (denote-directory "~/Documents/notes/")
     :bind ("C-x C-n" . denote))
 #+end_src
 

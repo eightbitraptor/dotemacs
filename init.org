@@ -176,27 +176,9 @@ lots of ~~~ files, that aren't often gitignored.
 
 *** Theming and Aesthetics
 
-First install solaire-mode, this changes the background colour of "unreal"
-buffers - ie. buffers that are not backed by a file. In general use this has the
-effect of making files being edited immediately and obviously distinct from
-other types of buffers, like dired, treemacs, magit, or the find-file buffer.
-
-This feature is one of the things I really enjoyed, visually, about VSCode
-
 #+begin_src emacs-lisp
-  (use-package solaire-mode
-    :demand t
-    :init (solaire-global-mode 1))
-#+end_src
-
-To make solaire mode work, we need to install a theme that supports it. The
-[[https://github.com/hlissner/emacs-solaire-mode#theme-support-for-solaire-mode][Github README for Solaire mode]] has a list of known supported themes. I'm using
-Wilmersorf, from the ~doom-themes~ package.
-
-#+begin_src emacs-lisp
-    (use-package autothemer)
-    (use-package sakura-theme
-      :init (load-theme 'sakura t))
+  (use-package modus-themes
+    :init (load-theme 'modus-operandi t))
 #+end_src
 
 Then nyan cat as a progress bar in my modeline
@@ -250,7 +232,7 @@ everything renders fonts differently and at different sizes.
 
 #+begin_src emacs-lisp
   (cond ((eq (window-system) 'x)
-         (set-face-attribute 'default nil :font "Jetbrains Mono 16"))
+         (set-face-attribute 'default nil :font "JetBrains Mono 14"))
         ((eq (window-system) 'mac)
          (setq mac-frame-tabbing nil)
          (set-face-attribute 'default nil :font "Jetbrains Mono 16"))

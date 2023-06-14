@@ -735,7 +735,8 @@ project. This pretty closely my Vim config which uses ~<Space> t~ and
                   lsp-diagnostics-provider nil
                   lsp-solargraph-hover nil
                   lsp-rust-analyzer-cargo-watch-command "clippy"
-                  lsp-rust-analyzer-server-display-inlay-hints t)
+                  lsp-rust-analyzer-server-display-inlay-hints t
+                  lsp-clients-clangd-args '("--header-insertion=never"))
     (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
     :hook ((c-mode . lsp)
            (c++-mode . lsp)

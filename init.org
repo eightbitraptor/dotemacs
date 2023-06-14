@@ -887,6 +887,18 @@ should require the ruby-style file.
           (require 'ruby-style))))
 #+end_src
 
+Also add a hook to ~cc-mode~ that sets up the comment/uncomment toggle
+shortcut key, because by default it's bound to comment region only and
+there's no shortcut for uncommenting a region, which is bonkers.
+
+#+begin_src emacs-lisp
+    (defun mvh/c-mode-hook ()
+      (define-key c-mode-map (kbd "C-c C-c") 'comment-or-uncomment-region))
+  (add-hook 'c-initialization-hook 'mvh/c-mode-hook)
+
+
+#+end_src
+
 *** Rust
 
 - [ ] Remove or explain the cargo-culted rustic-mode-hook

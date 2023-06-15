@@ -741,7 +741,7 @@ project. This pretty closely my Vim config which uses ~<Space> t~ and
     :config (advice-add 'lsp-ivy--goto-symbol :before
                         (lambda (arg)
                           (xref-push-marker-stack)))
-            (advice-add 'lsp-find-definition :before (lambda () (xref-push-marker-stack))))
+            (advice-add 'lsp-find-definition :before (lambda (arg) (xref-push-marker-stack))))
 
 
   (use-package ivy-xref
@@ -768,10 +768,6 @@ project. This pretty closely my Vim config which uses ~<Space> t~ and
 
 #+end_src
 
-      ;; Enable vertico
-    (use-package vertico
-      :init
-      (vertico-mode))
 #+end_src
 
 ** Language Modes

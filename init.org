@@ -177,8 +177,8 @@ lots of ~~~ files, that aren't often gitignored.
 *** Theming and Aesthetics
 
 #+begin_src emacs-lisp
-  (use-package modus-themes
-    :init (load-theme 'modus-operandi t))
+  (use-package kaolin-themes
+    :config (load-theme 'kaolin-eclipse t))
 #+end_src
 
 Then nyan cat as a progress bar in my modeline

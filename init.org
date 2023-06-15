@@ -880,7 +880,7 @@ If I have a Ruby checkout in the standard place I keep my source files, then we
 should require the ruby-style file.
 
 #+begin_src emacs-lisp
-  (let ((ruby-misc-dir "~/src/ruby/misc"))
+  (let ((ruby-misc-dir "~/git/ruby/misc"))
     (if (file-directory-p ruby-misc-dir)
         (progn
           (add-to-list 'load-path ruby-misc-dir)

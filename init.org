@@ -768,6 +768,12 @@ project. This pretty closely my Vim config which uses ~<Space> t~ and
 
 #+end_src
 
+While we're on ~xref~ and stuff. Let's also make is so that searching
+adds the point we're left on to the xref stack.
+
+#+begin_src emacs-lisp
+  (advice-add 'isearch-forward :before (lambda (arg1 arg2) (xref-push-marker-stack)))
+  (advice-add 'isearch-backward :before (lambda (arg1 arg2) (xref-push-marker-stack)))
 #+end_src
 
 ** Language Modes

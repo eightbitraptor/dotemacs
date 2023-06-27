@@ -334,6 +334,7 @@ any change you make while editing a file.
 
 #+begin_src emacs-lisp
   (use-package undo-tree
+    :init (setq undo-tree-auto-save-history nil)
     :config (global-undo-tree-mode))
 #+end_src
 

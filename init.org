@@ -942,7 +942,7 @@ handling this. I basically just bring in web-mode by default for a bunch of
 files that look a lot like they could be web adjacent and configure a consistent
 4 space indent.
 
-#+begin_src
+#+begin_src emacs-lisp
   (use-package web-mode
     :mode "\\.tsx"
           "\\.erb"

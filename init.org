@@ -174,7 +174,10 @@ lots of ~~~ files, that aren't often gitignored.
         (autosave-dir (expand-file-name "autosave" user-emacs-directory)))
     (when (not (file-directory-p autosave-dir))
       (make-directory autosave-dir))
+    (when (not (file-directory-p backup-dir))
+      (make-directory backup-dir))
     (setq auto-save-file-name-transforms (list (list ".*" autosave-dir t)))
+    (setq backup-directory-alist `(("." . ,backup-dir)))
     (setq backup-by-copying t))
 #+end_src
 

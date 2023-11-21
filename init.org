@@ -66,6 +66,7 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
     - [[#rust][Rust]]
     - [[#r][R]]
     - [[#web-jshtmlcss][Web (js/html/css)]]
+    - [[#zig][Zig]]
     - [[#markup-markdowntomlyaml][Markup (Markdown/toml/yaml)]]
   - [[#org-mode][Org Mode]]
     - [[#quick-notes-with-denote][Quick notes (with Denote)]]
@@ -981,6 +982,14 @@ files that look a lot like they could be web adjacent and configure a consistent
           (setq web-mode-code-indent-offset 4)
           (setq web-mode-content-types-alist '(("jsx" . "\\.js[x]?\\'")))
           (setq web-mode-enable-auto-indentation nil))
+#+end_src
+
+*** Zig
+
+An experiment with Zig.
+
+#+begin_src emacs-lisp
+  (use-package zig-mode)
 #+end_src
 
 *** Markup (Markdown/toml/yaml)

@@ -32,6 +32,7 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
     - [[#ergonomics][Ergonomics]]
     - [[#default-indentation][Default Indentation]]
     - [[#default-selection-behaviour][Default Selection behaviour]]
+    - [[#configuring-the-gc][Configuring the GC]]
     - [[#undo-tree][Undo Tree.]]
     - [[#crux][Crux]]
     - [[#whitespace-butler][Whitespace Butler]]
@@ -324,6 +325,17 @@ not actually remove the seletion.
 
 #+begin_src emacs-lisp
   (delete-selection-mode t)
+#+end_src
+
+*** Configuring the GC
+
+Here we increase the number of bytes that are required to be allocated before
+starting a GC. This is mostly to appease lsp-mode later on this file, which does
+a lot of async json communication and generates a lot of garbage
+
+#+begin_src emacs-lisp
+  (setq gc-cons-threshold 100000000)
+  (setq read-process-output-max (* 1024 1024))
 #+end_src
 
 *** Undo Tree.

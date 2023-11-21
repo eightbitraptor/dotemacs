@@ -167,12 +167,13 @@ directory for any manually created backups to be inside the
 lots of ~~~ files, that aren't often gitignored.
 
 #+begin_src emacs-lisp
-  (setq auto-save-default nil)
-  (setq backup-directory-alist
-        (list (cons "." (expand-file-name "backup" user-emacs-directory))))
-  (setq make-backup-files nil)
+  (let ((backup-dir (expand-file-name "backup" user-emacs-directory))
+        (autosave-dir (expand-file-name "autosave" user-emacs-directory)))
+    (when (not (file-directory-p autosave-dir))
+      (make-directory autosave-dir))
+    (setq auto-save-file-name-transforms (list (list ".*" autosave-dir t)))
+    (setq backup-by-copying t))
 #+end_src
-
 
 *** Theming and Aesthetics
 
@@ -250,8 +251,8 @@ function, bound to ~C-c u~ to unfill any paragrahs that get broken
 when I don't want them to be.
 
 #+begin_src emacs-lisp
+  (setq-default fill-column 80)
   (add-hook 'text-mode-hook 'turn-on-auto-fill)
-  (set-fill-column 80)
 
   (defun unfill-paragraph ()
     (interactive)

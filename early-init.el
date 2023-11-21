@@ -1,8 +1,20 @@
+(defun my-append-env-var (var-name value)
+  "Append VALUE to the beginning of current value of env variable VAR-NAME."
+  (setenv var-name (if (getenv var-name)
+                       (format "%s:%s" value (getenv var-name))
+                     value)))
+;; Set up library locations for native compilation on macOS
+(let ((gccjitpath "/opt/homebrew/lib/gcc/11:/opt/homebrew/lib"))
+  (mapc (lambda (var-name) (my-append-env-var var-name gccjitpath))
+        '("LIBRARY_PATH" "LD_LIBRARY_PATH" "PATH")))
+
 ;; Switch to the most updated version of org as early as possible
 (add-to-list 'load-path (expand-file-name "~/.emacs.d/straight/build/org"))
 
 ;; Disable package.el in favor of straight.el
 (setq package-enable-at-startup nil)
+
+(add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
 
 ;; Bootstrap straight.el
 (defvar bootstrap-version)

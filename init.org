@@ -64,6 +64,7 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
     - [[#ruby][Ruby]]
     - [[#c][C]]
     - [[#rust][Rust]]
+    - [[#r][R]]
     - [[#web-jshtmlcss][Web (js/html/css)]]
     - [[#markup-markdowntomlyaml][Markup (Markdown/toml/yaml)]]
   - [[#org-mode][Org Mode]]
@@ -948,6 +949,15 @@ Most of the useful stuff is actually defined in the lsp-mode section.
     ;; this should no longer be necessary.
     (when buffer-file-name
       (setq-local buffer-save-without-query t)))
+#+end_src
+
+*** R
+
+I use R generally for a bit of light stats munging. These days its mostly taking
+benchmark results of perf numbers of the Ruby VM and visualising them.
+
+#+begin_src emacs-lisp
+  (use-package ess)
 #+end_src
 
 *** Web (js/html/css)

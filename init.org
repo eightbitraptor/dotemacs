@@ -183,12 +183,28 @@ lots of ~~~ files, that aren't often gitignored.
 
 *** Theming and Aesthetics
 
+First install solaire-mode, this changes the background colour of "unreal"
+buffers - ie. buffers that are not backed by a file. In general use this has the
+effect of making files being edited immediately and obviously distinct from
+other types of buffers, like dired, treemacs, magit, or the find-file buffer.
+
+This feature is one of the things I really enjoyed, visually, about VSCode
+
+#+begin_src emacs-lisp
+  (use-package solaire-mode
+    :demand t
+    :init (solaire-global-mode +1))
+#+end_src
+
+Now set up a theme. We need to choose a theme here that explicitly supports
+solaire-mode.
+
 #+begin_src emacs-lisp
   (push '(menu-bar-lines . 0)   default-frame-alist)
   (push '(tool-bar-lines . 0)   default-frame-alist) ;; <----- here
   (push '(vertical-scroll-bars) default-frame-alist)
-    (use-package kaolin-themes
-      :config (load-theme 'kaolin-eclipse t))
+  (use-package doom-themes
+    :config (load-theme 'doom-city-lights t))
 #+end_src
 
 Then nyan cat as a progress bar in my modeline
@@ -639,10 +655,12 @@ While we're here let's configure ~M-t~ to use trigger imenu.
     :config (setq projectile-dynamic-mode-line nil)
     (projectile-global-mode)
     :bind-keymap ("C-c p" . projectile-command-map)
+    :bind ("M-o" . projectile-find-file)
     :init (setq projectile-completion-system 'ivy))
 
   (use-package projectile-rails
     :config (projectile-rails-global-mode t))
+  (use-package projectile-ripgrep)
 #+end_src
 
 *** Direnv

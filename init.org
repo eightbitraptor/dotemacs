@@ -170,13 +170,13 @@ directory for any manually created backups to be inside the
 lots of ~~~ files, that aren't often gitignored.
 
 #+begin_src emacs-lisp
-  (let ((backup-dir (expand-file-name "backup" user-emacs-directory))
-        (autosave-dir (expand-file-name "autosave" user-emacs-directory)))
+  (let ((backup-dir (expand-file-name "backup/" user-emacs-directory))
+        (autosave-dir (expand-file-name "autosave/" user-emacs-directory)))
     (when (not (file-directory-p autosave-dir))
       (make-directory autosave-dir))
     (when (not (file-directory-p backup-dir))
       (make-directory backup-dir))
-    (setq auto-save-file-name-transforms (list (list ".*" autosave-dir t)))
+    (setq auto-save-file-name-transforms `((".*" ,autosave-dir t)))
     (setq backup-directory-alist `(("." . ,backup-dir)))
     (setq backup-by-copying t))
 #+end_src

@@ -14,4 +14,8 @@ init.el
 
 eln-cache
 
+backup
+autosave
+
+
 *~

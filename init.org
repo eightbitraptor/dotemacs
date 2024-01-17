@@ -1001,11 +1001,11 @@ files that look a lot like they could be web adjacent and configure a consistent
           "\\.css"
           "\\.scss"
           "\\.sass"
-    :init (setq web-mode-markup-indent-offset 4)
-          (setq web-mode-css-indent-offset 4)
-          (setq web-mode-code-indent-offset 4)
+    :init (setq web-mode-markup-indent-offset 2)
+          (setq web-mode-css-indent-offset 2)
+          (setq web-mode-code-indent-offset 2)
           (setq web-mode-content-types-alist '(("jsx" . "\\.js[x]?\\'")))
-          (setq web-mode-enable-auto-indentation nil))
+          (setq web-mode-enable-auto-indentation 1))
 #+end_src
 
 *** Zig

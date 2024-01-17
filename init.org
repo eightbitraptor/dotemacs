@@ -752,61 +752,63 @@ project. This pretty closely my Vim config which uses ~<Space> t~ and
 ~<Space> T~ for the same.
 
 #+begin_src emacs-lisp
-        ;;    (setq lsp-client-packages '(lsp-solargraph lsp-clangd lsp-rust-analyzer))
-        (use-package lsp-mode
-          :config (setq lsp-idle-delay 0.1
-                        lsp-headerline-breadcrumb-enable nil
-                        lsp-enable-on-type-formatting nil
-                        lsp-enable-indentation nil
-                        lsp-solargraph-formatting nil
-                        lsp-enable-snippets nil
-                        lsp-solargraph-diagnostics nil
-                        lsp-diagnostics-provider nil
-                        lsp-solargraph-hover nil
-                        lsp-rust-analyzer-cargo-watch-command "clippy"
-                        lsp-rust-analyzer-server-display-inlay-hints t
-                        lsp-clients-clangd-args '("--header-insertion=never"
-                                                  "--all-scopes-completion"
-                                                  "--background-index"))
-          :hook ((c-mode . lsp)
-                 (c++-mode . lsp)
-                 (rustic-mode . lsp)
-                 (lsp-mode . lsp-enable-which-key-integration))
-          :bind (("<mouse-8>" . lsp-find-definition)
-                 ("<mouse-9>" . xref-pop-marker-stack)
-                 ("<f12>" . lsp-find-references)
-                 ("s-'" . xref-pop-marker-stack))
-          :bind-keymap ("C-c l" . lsp-command-map))
+  ;;    (setq lsp-client-packages '(lsp-solargraph lsp-clangd lsp-rust-analyzer))
+  (use-package lsp-mode
+    :config (setq lsp-idle-delay 0.1
+                  lsp-headerline-breadcrumb-enable nil
+                  lsp-enable-on-type-formatting nil
+                  lsp-enable-indentation nil
+                  lsp-solargraph-formatting nil
+                  lsp-enable-snippets nil
+                  lsp-solargraph-diagnostics nil
+                  lsp-diagnostics-provider nil
+                  lsp-solargraph-hover nil
+                  lsp-rust-analyzer-cargo-watch-command "clippy"
+                  lsp-rust-analyzer-server-display-inlay-hints t
+                  lsp-clients-clangd-args '("--header-insertion=never"
+                                            "--all-scopes-completion"
+                                            "--background-index"))
+    :hook ((c-mode . lsp)
+           (c++-mode . lsp)
+           (rustic-mode . lsp)
+           (lsp-mode . lsp-enable-which-key-integration))
+    :bind (("<mouse-8>" . lsp-find-definition)
+           ("s-<mouse-1>" . lsp-find-definition)
+           ("s-<mouse-2>" . lsp-find-references)
+           ("<mouse-9>" . xref-pop-marker-stack)
+           ("<f12>" . lsp-find-references)
+           ("s-'" . xref-pop-marker-stack))
+    :bind-keymap ("C-c l" . lsp-command-map))
 
-        (use-package lsp-ivy
-          :bind ("M-T" . 'lsp-ivy-workspace-symbol)
-          :config (advice-add 'lsp-ivy--goto-symbol :before
-                              (lambda (arg)
-                                (xref-push-marker-stack)))
-          (advice-add 'lsp-find-definition :before (lambda () (xref-push-marker-stack))))
-
-
-        (use-package ivy-xref
-          :init
-          ;; xref initialization is different in Emacs 27 - there are two different
-          ;; variables which can be set rather than just one
-          (when (>= emacs-major-version 27)
-            (setq xref-show-definitions-function #'ivy-xref-show-defs))
-          ;; Necessary in Emacs <27. In Emacs 27 it will affect all xref-based
-          ;; commands other than xref-find-definitions (e.g. project-find-regexp)
-          ;; as well
-          (setq xref-show-xrefs-function #'ivy-xref-show-xrefs))
+  (use-package lsp-ivy
+    :bind ("M-T" . 'lsp-ivy-workspace-symbol)
+    :config (advice-add 'lsp-ivy--goto-symbol :before
+                        (lambda (arg)
+                          (xref-push-marker-stack)))
+    (advice-add 'lsp-find-definition :before (lambda () (xref-push-marker-stack))))
 
 
-        (use-package lsp-ui
-          :config (setq lsp-ui-sideline-mode nil
-                        lsp-ui-flycheck-live-reporting nil
-                        lsp-ui-sideline-enable nil
-                        lsp-ui-sideline-show-diagnostics nil)
-          :bind (:map
-                 lsp-mode-map
-                 ([remap xref-find-definitions] . #'lsp-ui-peek-find-definitions)
-                 ([remap xref-find-references] . #'lsp-ui-peek-find-references)))
+  (use-package ivy-xref
+    :init
+    ;; xref initialization is different in Emacs 27 - there are two different
+    ;; variables which can be set rather than just one
+    (when (>= emacs-major-version 27)
+      (setq xref-show-definitions-function #'ivy-xref-show-defs))
+    ;; Necessary in Emacs <27. In Emacs 27 it will affect all xref-based
+    ;; commands other than xref-find-definitions (e.g. project-find-regexp)
+    ;; as well
+    (setq xref-show-xrefs-function #'ivy-xref-show-xrefs))
+
+
+  (use-package lsp-ui
+    :config (setq lsp-ui-sideline-mode nil
+                  lsp-ui-flycheck-live-reporting nil
+                  lsp-ui-sideline-enable nil
+                  lsp-ui-sideline-show-diagnostics nil)
+    :bind (:map
+           lsp-mode-map
+           ([remap xref-find-definitions] . #'lsp-ui-peek-find-definitions)
+           ([remap xref-find-references] . #'lsp-ui-peek-find-references)))
 
 #+end_src
 

@@ -370,9 +370,11 @@ provides a way of visualising the tree, so you can get back basically
 any change you make while editing a file.
 
 #+begin_src emacs-lisp
-  (use-package undo-tree
-    :init (setq undo-tree-auto-save-history nil)
-    :config (global-undo-tree-mode))
+    (use-package undo-tree
+      :init (setq undo-tree-auto-save-history nil
+                  undo-tree-history-directory-alist '("~/.emacs.d/autosave/"))
+
+      :config (global-undo-tree-mode))
 #+end_src
 
 *** Crux

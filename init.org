@@ -947,6 +947,24 @@ there's no shortcut for uncommenting a region, which is bonkers.
   (add-hook 'c-initialization-hook 'mvh/prog-mode-hook)
 #+end_src
 
+#+begin_src emacs-lisp
+  (defun cruby/compile-command ()
+    "Returns a String representing the compile command to run for the given context"
+    "make miniruby")
+
+  (defun cruby/test-command ()
+    "Returns a String representing the test command to run for the given context"
+    (cond
+     ((eq major-mode 'c-mode) "make btest")
+     ((eq major-mode 'enh-ruby-mode)
+      (format "make test-all TESTS=\"%s\"" (buffer-file-name)))
+     ))
+
+  (projectile-register-project-type 'cruby '("ruby.c" "kernel.rb" "yjit.c" )
+                                    :compile 'cruby/compile-command
+                                    :test 'cruby/test-command)
+#+end_src
+
 *** Rust
 
 - [ ] Remove or explain the cargo-culted rustic-mode-hook

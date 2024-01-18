@@ -325,6 +325,14 @@ not. At some point I'll get around to testing that...
        (global-unset-key "\C-x\C-z"))))
 #+end_src
 
+Also enable Auto-revert mode globally. I do a lot of stuff on the command line
+and in other tools, it's nice to not have to get hit with the prompt when I
+switch back to Emacs and try to edit something.
+
+#+begin_src emacs-lisp
+  (setq global-auto-revert-mode 1)
+#+end_src
+
 *** Default Indentation
 
 Default to 4 spaces as an indent everywhere. Obviously other modes are

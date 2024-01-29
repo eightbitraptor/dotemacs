@@ -8,6 +8,9 @@
   (mapc (lambda (var-name) (my-append-env-var var-name gccjitpath))
         '("LIBRARY_PATH" "LD_LIBRARY_PATH" "PATH")))
 
+;; Disable native-comp error/warning reporting
+(setq native-comp-async-report-warnings-errors nil)
+
 ;; Switch to the most updated version of org as early as possible
 (add-to-list 'load-path (expand-file-name "~/.emacs.d/straight/build/org"))
 

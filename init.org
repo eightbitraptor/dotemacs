@@ -206,7 +206,7 @@ solaire-mode.
   (push '(tool-bar-lines . 0)   default-frame-alist) ;; <----- here
   (push '(vertical-scroll-bars) default-frame-alist)
   (use-package doom-themes
-    :config (load-theme 'doom-city-lights t))
+    :config (load-theme 'doom-tokyo-night t))
 #+end_src
 
 Then nyan cat as a progress bar in my modeline

@@ -131,6 +131,8 @@ different environment.
                                                  "GEM_PATH"))
           (setq exec-path-from-shell-check-startup-files nil)
           (exec-path-from-shell-initialize))
+
+  (setq frame-resize-pixelwise t)
 #+end_src
 
 *** No littering

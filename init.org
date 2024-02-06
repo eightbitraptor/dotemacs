@@ -205,8 +205,9 @@ solaire-mode.
   (push '(menu-bar-lines . 0)   default-frame-alist)
   (push '(tool-bar-lines . 0)   default-frame-alist) ;; <----- here
   (push '(vertical-scroll-bars) default-frame-alist)
-  (use-package doom-themes
-    :config (load-theme 'doom-tokyo-night t))
+  (use-package catppuccin-theme
+    :init (setq catppuccin-flavor 'macchiato)
+    :config (load-theme 'catppuccin :no-confirm))
 #+end_src
 
 Then nyan cat as a progress bar in my modeline

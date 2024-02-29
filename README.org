@@ -203,11 +203,11 @@ solaire-mode.
 
 #+begin_src emacs-lisp
   (push '(menu-bar-lines . 0)   default-frame-alist)
-  (push '(tool-bar-lines . 0)   default-frame-alist) ;; <----- here
+  (push '(tool-bar-lines . 0)   default-frame-alist)
   (push '(vertical-scroll-bars) default-frame-alist)
-  (use-package catppuccin-theme
-    :init (setq catppuccin-flavor 'macchiato)
-    :config (load-theme 'catppuccin :no-confirm))
+
+  (use-package doom-themes
+    :config (load-theme 'doom-ayu-mirage :no-confirm))
 #+end_src
 
 Then nyan cat as a progress bar in my modeline

@@ -42,5 +42,6 @@
 (setq straight-use-package-by-default t)
 
 (use-package org)
-;; Load main init file
-(org-babel-load-file (expand-file-name "README.org" user-emacs-directory))
+;; Generate main init file
+(org-babel-tangle-file (expand-file-name "README.org" user-emacs-directory)
+                       (expand-file-name "init.el" user-emacs-directory))

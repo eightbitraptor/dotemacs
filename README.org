@@ -207,7 +207,7 @@ solaire-mode.
   (push '(vertical-scroll-bars) default-frame-alist)
 
   (use-package doom-themes
-    :config (load-theme 'doom-ayu-mirage :no-confirm))
+    :config (load-theme 'doom-wilmersdorf :no-confirm))
 #+end_src
 
 Then nyan cat as a progress bar in my modeline

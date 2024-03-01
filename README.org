@@ -269,6 +269,33 @@ everything renders fonts differently and at different sizes.
          (set-face-attribute 'default nil :font "Consolas 16")))
 #+end_src
 
+I spend time manually resizing my Emacs frame ususally when it starts, I usually
+want it to just take up roughly 70% of the screen, and be centered, so let's
+make it do that. I used this code almost verbatim from here, but had to change
+the width calculation to consider multiple monitors used horizontally. This will
+always open the initial frame on the Primary monitor.
+
+https://www.reddit.com/r/emacs/comments/9c0a4d/tip_setting_initial_frame_size_and_position/
+
+#+begin_src emacs-lisp
+  ;; Set initial frame size and position
+
+  (nth 3 (assoc 'geometry (car (display-monitor-attributes-list))))
+  (defun mvh/set-initial-frame ()
+    (let* ((base-factor 0.85)
+           (primary-monitor-actual-width
+            (nth 3 (assoc 'geometry (car (display-monitor-attributes-list)))))
+  	 (a-width (* primary-monitor-actual-width base-factor))
+           (a-height (* (display-pixel-height) base-factor))
+           (a-left (truncate (/ (- primary-monitor-actual-width a-width) 2)))
+  	 (a-top (truncate (/ (- (display-pixel-height) a-height) 2))))
+      (set-frame-position (selected-frame) a-left a-top)
+      (set-frame-size (selected-frame) (truncate a-width)  (truncate a-height) t)))
+  (setq frame-resize-pixelwise t)
+  (mvh/set-initial-frame)
+#+end_src
+
+
 *** Line Lengths
 
 Break all long lines automatically at ~fill-column~ so I don't have to press

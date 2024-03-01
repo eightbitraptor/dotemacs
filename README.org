@@ -1131,8 +1131,8 @@ file.
 #+begin_src emacs-lisp
     (use-package org-journal
       :init (setq org-journal-prefix-key "C-c j ")
-      :custom (org-journal-dir "~/Documents/org/log_books/")
-              (org-journal-file-format "%Y%m%d")
+      :custom (org-journal-dir "~/git/notes/log_book/")
+              (org-journal-file-format "%Y/%m/%d")
               (org-journal-date-format "%A %d %b %Y")
               (org-agenda-files "~/Documents/org/"))
 #+end_src

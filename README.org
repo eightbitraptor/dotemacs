@@ -124,7 +124,7 @@ different environment.
 
 #+begin_src emacs-lisp
   (use-package exec-path-from-shell
-    :if (memq window-system '(mac ns x))
+    :if (memq system-type '(darwin gnu/linux))
     :init (setq exec-path-from-shell-variables '("PATH"
                                                  "MANPATH"
                                                  "GEM_HOME"
@@ -260,12 +260,12 @@ Now we'll configure the default fonts. We have to do this per OS because
 everything renders fonts differently and at different sizes.
 
 #+begin_src emacs-lisp
-  (cond ((eq (window-system) 'x)
+  (cond ((eq system-type 'gnu/linux)
          (set-face-attribute 'default nil :font "JetBrains Mono 14"))
-        ((eq (window-system) 'mac)
+        ((eq system-type 'darwin)
          (setq mac-frame-tabbing nil)
          (set-face-attribute 'default nil :font "Jetbrains Mono 16"))
-        ((eq (window-system) 'w32)
+        ((eq system-type 'windows-nt)
          (set-face-attribute 'default nil :font "Consolas 16")))
 #+end_src
 

@@ -852,7 +852,7 @@ I also use minitest for testing.
 #+begin_src emacs-lisp
   (if (string-match "Shopify" (system-name))
       (use-package chruby
-        :init (chruby "ruby_3_1"))
+        :init (chruby "3.3.0"))
     (use-package rbenv
         :init (global-rbenv-mode)
         (rbenv-use-global)))

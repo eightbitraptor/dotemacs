@@ -804,6 +804,9 @@ activate with the ~chruby~ plugin inside Emacs.
                                               :inlayHintProvider))
     (eglot-ensure))
   (use-package eglot
+    :bind ("M-T" . 'xref-find-apropos)
+          ("<mouse-5>" . 'xref-find-definitions)
+          ("<mouse-4>" . 'xref-go-back)
     :config (add-to-list 'eglot-server-programs '((ruby-mode enh-ruby-mode) . ("ruby-lsp")))
             (add-to-list 'eglot-server-programs
                          '((c-mode c++-mode) . ("clangd"

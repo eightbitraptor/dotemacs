@@ -32,6 +32,7 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
     - [[#ergonomics][Ergonomics]]
     - [[#default-indentation][Default Indentation]]
     - [[#default-selection-behaviour][Default Selection behaviour]]
+    - [[#m-q-should-toggle-fill-paragraph][M-q should toggle Fill Paragraph]]
     - [[#configuring-the-gc][Configuring the GC]]
     - [[#undo-tree][Undo Tree.]]
     - [[#crux][Crux]]
@@ -376,17 +377,24 @@ generally.
 
 *** Default Selection behaviour
 
-And turn on ~delete-selection-mode~. This makes emacs visual selection
-behave much more like "modern" editors. ie. when you select stuff and
-start typing your text will _replace_ the selected text, and you can
-highlight text and then hit backspace to delete it.
+And turn on ~delete-selection-mode~. This makes emacs visual selection behave
+much more like "modern" editors. ie. when you select stuff and start typing your
+text will _replace_ the selected text, and you can highlight text and then hit
+backspace to delete it.
 
-Without this minor mode enabled Emacs will start inserting text
-wherever the point is located (often at the end of the selection), and
-not actually remove the seletion.
+Without this minor mode enabled Emacs will start inserting text wherever the
+point is located (often at the end of the selection), and not actually remove
+the seletion.
 
 #+begin_src emacs-lisp
   (delete-selection-mode t)
+#+end_src
+
+*** M-q should toggle Fill Paragraph
+
+#+begin_src emacs-lisp
+  (use-package unfill
+    :bind ([remap fill-paragraph] . unfill-toggle))'
 #+end_src
 
 *** Configuring the GC

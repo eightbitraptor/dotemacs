@@ -697,6 +697,8 @@ While we're here let's configure ~M-t~ to use trigger imenu.
            ("C-S-g" . projectile-grep))
     :init (setq projectile-completion-system 'ivy))
 
+  (use-package ag)
+
   (use-package projectile-rails
     :config (projectile-rails-global-mode t))
   (use-package projectile-ripgrep)
@@ -847,6 +849,8 @@ Some of the codebases I use often require frozen strings. So this convenience
 function will add the magic header if it's not already there.
 
 #+begin_src emacs-lisp
+  (use-package chruby)
+
   (defun ruby-frozen-string-literal ()
     "Check the current buffer for the magic comment # frozen_string_literal: true.
   If the comment doesn't exist, offer to insert it."

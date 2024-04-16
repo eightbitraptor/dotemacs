@@ -812,9 +812,6 @@ project. This pretty closely my Vim config which uses ~<Space> t~ and
                   lsp-solargraph-formatting nil
                   lsp-eldoc-enable-hover nil
                   lsp-enable-snippets nil
-                  lsp-solargraph-diagnostics nil
-                  lsp-diagnostics-provider nil
-                  lsp-solargraph-hover nil
                   lsp-rust-analyzer-cargo-watch-command "clippy"
                   lsp-rust-analyzer-server-display-inlay-hints t
                   lsp-enabled-clients '(clangd

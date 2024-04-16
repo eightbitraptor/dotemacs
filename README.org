@@ -802,6 +802,8 @@ project. This pretty closely my Vim config which uses ~<Space> t~ and
 ~<Space> T~ for the same.
 
 #+begin_src emacs-lisp
+  (use-package flycheck)
+
   (use-package lsp-mode
     :config (setq lsp-idle-delay 0.1
                   lsp-headerline-breadcrumb-enable nil

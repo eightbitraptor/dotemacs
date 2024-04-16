@@ -810,6 +810,7 @@ project. This pretty closely my Vim config which uses ~<Space> t~ and
                   lsp-enable-on-type-formatting nil
                   lsp-enable-indentation nil
                   lsp-solargraph-formatting nil
+                  lsp-eldoc-enable-hover nil
                   lsp-enable-snippets nil
                   lsp-solargraph-diagnostics nil
                   lsp-diagnostics-provider nil

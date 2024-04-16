@@ -839,7 +839,6 @@ project. This pretty closely my Vim config which uses ~<Space> t~ and
                           (xref-push-marker-stack)))
     (advice-add 'lsp-find-definition :before (lambda () (xref-push-marker-stack))))
 
-
   (use-package ivy-xref
     :init
     ;; xref initialization is different in Emacs 27 - there are two different
@@ -861,7 +860,6 @@ project. This pretty closely my Vim config which uses ~<Space> t~ and
            lsp-mode-map
            ([remap xref-find-definitions] . #'lsp-ui-peek-find-definitions)
            ([remap xref-find-references] . #'lsp-ui-peek-find-references)))
-
 #+end_src
 
 While we're on ~xref~ and stuff. Let's also make is so that searching

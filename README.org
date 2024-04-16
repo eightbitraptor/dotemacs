@@ -1025,7 +1025,7 @@ rustic-mode. With a few keybindings to tie in to specific functions in lsp-mode
 
 Most of the useful stuff is actually defined in the lsp-mode section.
 
-#+begin_src
+#+begin_src emacs-lisp
   (use-package rustic
     :bind (:map rustic-mode-map
                 ("C-c C-c a" . lsp-execute-code-action)

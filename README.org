@@ -816,6 +816,9 @@ project. This pretty closely my Vim config which uses ~<Space> t~ and
                   lsp-solargraph-hover nil
                   lsp-rust-analyzer-cargo-watch-command "clippy"
                   lsp-rust-analyzer-server-display-inlay-hints t
+                  lsp-enabled-clients '(clangd
+                                        ruby-lsp-ls
+                                        rust-analyzer)
                   lsp-clients-clangd-args '("--header-insertion=never"
                                             "--all-scopes-completion"
                                             "--background-index"))

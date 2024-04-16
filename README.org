@@ -394,7 +394,7 @@ the seletion.
 
 #+begin_src emacs-lisp
   (use-package unfill
-    :bind ([remap fill-paragraph] . unfill-toggle))'
+    :bind ([remap fill-paragraph] . unfill-toggle))
 #+end_src
 
 *** Configuring the GC

@@ -194,9 +194,9 @@ other types of buffers, like dired, treemacs, magit, or the find-file buffer.
 This feature is one of the things I really enjoyed, visually, about VSCode
 
 #+begin_src emacs-lisp
-  ;;(use-package solaire-mode
-  ;;  :demand t
-  ;;  :init (solaire-global-mode +1))
+  (use-package solaire-mode
+    :demand t
+    :init (solaire-global-mode +1))
 #+end_src
 
 Now set up a theme. We need to choose a theme here that explicitly supports
@@ -207,8 +207,8 @@ solaire-mode.
   (push '(tool-bar-lines . 0)   default-frame-alist)
   (push '(vertical-scroll-bars) default-frame-alist)
 
-  (use-package ef-themes
-    :config (load-theme 'ef-winter :no-confirm))
+  (use-package doom-themes
+    :config (load-theme 'doom-moonlight :no-confirm))
 #+end_src
 
 Then nyan cat as a progress bar in my modeline

@@ -208,7 +208,7 @@ solaire-mode.
   (push '(vertical-scroll-bars) default-frame-alist)
 
   (use-package doom-themes
-    :config (load-theme 'doom-moonlight :no-confirm))
+    :config (load-theme 'doom-tokyo-night :no-confirm))
 #+end_src
 
 Then nyan cat as a progress bar in my modeline
@@ -802,6 +802,7 @@ project. This pretty closely my Vim config which uses ~<Space> t~ and
 ~<Space> T~ for the same.
 
 #+begin_src emacs-lisp
+
   (use-package flycheck)
 
   (use-package lsp-mode
@@ -822,6 +823,7 @@ project. This pretty closely my Vim config which uses ~<Space> t~ and
                                             "--background-index"))
     :hook ((c-mode . lsp)
            (c++-mode . lsp)
+           (enh-ruby-mode . lsp)
            (rustic-mode . lsp)
            (lsp-mode . lsp-enable-which-key-integration))
     :bind (("<mouse-4>" . lsp-find-definition)
@@ -1013,6 +1015,8 @@ there's no shortcut for uncommenting a region, which is bonkers.
   (projectile-register-project-type 'cruby '("ruby.c" "kernel.rb" "yjit.c" )
                                     :compile 'cruby/compile-command
                                     :test 'cruby/test-command)
+
+(use-package meson-mode)
 #+end_src
 
 *** Rust

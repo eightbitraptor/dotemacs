@@ -18,5 +18,6 @@ eln-cache
 backup
 autosave
 
+tree-sitter
 
 *~

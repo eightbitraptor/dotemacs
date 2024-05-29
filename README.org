@@ -262,7 +262,7 @@ everything renders fonts differently and at different sizes.
 
 #+begin_src emacs-lisp
   (cond ((eq system-type 'gnu/linux)
-         (set-face-attribute 'default nil :font "JetBrains Mono 14"))
+         (set-face-attribute 'default nil :font "JetBrains Mono 12"))
         ((eq system-type 'darwin)
          (setq mac-frame-tabbing nil)
          (set-face-attribute 'default nil :font "Jetbrains Mono 16"))

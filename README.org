@@ -332,6 +332,11 @@ This controls how many lines the mouse wheel scrolls by.
   (setq mouse-wheel-scroll-amount '(1 ((shift) . 1) ((control) . nil)))
 #+end_src
 
+#+begin_src emacs-lisp
+  (use-package beacon
+    :config (beacon-mode 1))
+#+end_src
+
 *** Answer prompt questions faster
 
 Use y/n in prompts instead of having to explicitly type yes or no

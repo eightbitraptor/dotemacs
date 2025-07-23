@@ -20,6 +20,7 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
   - [[#introduction][Introduction]]
     - [[#setup-instructions][Setup Instructions]]
   - [[#general-editor-settings][General Editor Settings]]
+    - [[#performance-and-startup-optimizations][Performance and Startup Optimizations]]
     - [[#setting-up-the-path][Setting up the PATH]]
     - [[#no-littering][No littering]]
     - [[#fish-mode][Fish mode]]
@@ -117,6 +118,32 @@ well; It doesn't really bother me enough to fix it.
 
 ** General Editor Settings
 
+*** Performance and Startup Optimizations
+
+Enable package quickstart for faster startup times. This pre-computes package
+autoloads and saves them to a file that loads quickly. We also ensure straight.el
+packages can be found during compilation and set up automatic byte-compilation
+of the tangled init.el file after all packages are loaded for better performance.
+
+#+begin_src emacs-lisp
+  ;; Enable package quickstart (must be near the beginning)
+  (setq package-quickstart t)
+
+  ;; Startup time reporting is handled in early-init.el
+
+  ;; Ensure straight.el packages can be found
+  (eval-when-compile
+    (add-to-list 'load-path (expand-file-name "straight/build/" user-emacs-directory)))
+
+  ;; Byte-compile init.el after all packages are loaded
+  (add-hook 'after-init-hook
+            (lambda ()
+              (let ((init-el (expand-file-name "init.el" user-emacs-directory)))
+                (when (and (file-exists-p init-el)
+                           (not (file-exists-p (concat init-el "c"))))
+                  (byte-compile-file init-el)))))
+#+end_src
+
 *** Setting up the PATH
 
 I like to make sure that Emacs is using the same PATH and Ruby paths as my shell
@@ -124,6 +151,7 @@ for consistency. This is important on macOS where processes are started with a
 different environment.
 
 #+begin_src emacs-lisp
+  ;;; init.el --- Main configuration -*- lexical-binding: t; -*-
   (use-package exec-path-from-shell
     :if (memq system-type '(darwin gnu/linux))
     :init (setq exec-path-from-shell-variables '("PATH"
@@ -203,12 +231,8 @@ Now set up a theme. We need to choose a theme here that explicitly supports
 solaire-mode.
 
 #+begin_src emacs-lisp
-  (push '(menu-bar-lines . 0)   default-frame-alist)
-  (push '(tool-bar-lines . 0)   default-frame-alist)
-  (push '(vertical-scroll-bars) default-frame-alist)
-
   (use-package doom-themes
-    :config (load-theme 'doom-tokyo-night :no-confirm))
+    :config (load-theme 'doom-moonlight :no-confirm))
 #+end_src
 
 Then nyan cat as a progress bar in my modeline
@@ -232,8 +256,8 @@ whole window.
                                orig-fg))))
 #+end_src
 
-I like the cursor to be an I-beam, and I like to disable all the toolbars and
-scrollbars for a pretty clean looking frame.
+I like the cursor to be an I-beam. The toolbars and scrollbars are disabled
+in early-init.el for faster startup and a clean looking frame.
 
 #+begin_src emacs-lisp
   (setq-default cursor-type 'bar)
@@ -281,7 +305,6 @@ https://www.reddit.com/r/emacs/comments/9c0a4d/tip_setting_initial_frame_size_an
 #+begin_src emacs-lisp
   ;; Set initial frame size and position
 
-  (nth 3 (assoc 'geometry (car (display-monitor-attributes-list))))
   (defun mvh/set-initial-frame ()
     (let* ((base-factor 0.85)
            (primary-monitor-actual-width
@@ -404,13 +427,12 @@ the seletion.
 
 *** Configuring the GC
 
-Here we increase the number of bytes that are required to be allocated before
-starting a GC. This is mostly to appease lsp-mode later on this file, which does
-a lot of async json communication and generates a lot of garbage
+GC settings are now optimized in early-init.el for better startup performance.
+These values are restored after init to reasonable runtime values.
 
 #+begin_src emacs-lisp
-  (setq gc-cons-threshold 100000000)
-  (setq read-process-output-max (* 1024 1024))
+  ;; GC settings moved to early-init.el for better startup performance
+  ;; Runtime values are set in emacs-startup-hook
 #+end_src
 
 *** Undo Tree.
@@ -454,7 +476,7 @@ like are:
 
 Makes sure I don't accidentally commit loads of bad whitespace.
 
-#+begin_src
+#+begin_src emacs-lisp
   (use-package ws-butler
     :init (setq ws-butler-keep-whitespace-before-point nil)
     (ws-butler-global-mode))
@@ -514,7 +536,7 @@ documentation.
       ) ; end-of-let
 
     ;; put the point in the lowest line and return
-    (next-line arg))
+    (forward-line arg))
 #+end_src
 
 *** Quickly change frame font sizes
@@ -617,6 +639,7 @@ doesn't get in my way when I'm doing normal things.
 
 #+begin_src emacs-lisp
   (use-package which-key
+    :defer 1  ; Load 1 second after startup
     :config (which-key-mode)
             (setq which-key-idle-delay 3))
 
@@ -630,7 +653,8 @@ for fast project searches, relies on the ~rg~ binary being somewhere
 on your path.
 
 #+begin_src emacs-lisp
-  (use-package ripgrep)
+  (use-package ripgrep
+    :defer t)
 #+end_src
 
 *** Flx
@@ -640,7 +664,8 @@ think it's either pulled in as a dep of something or I don't use it
 anymore.
 
 #+begin_src emacs-lisp
-  (use-package flx)
+  (use-package flx
+    :defer t)
 #+end_src
 
 *** Ivy
@@ -673,14 +698,7 @@ narrow down on the one I want.
 #+end_src
 
 I cargo-culted this init section from somewhere and I can't remember
-what it fixes anymore.
-
-#+begin_src emacs-lisp
-  (use-package ivy-xref
-    :init (when (>= emacs-major-version 27)
-            (setq xref-show-definitions-function #'ivy-xref-show-defs))
-    (setq xref-show-xrefs-function #'ivy-xref-show-xrefs))
-#+end_src
+what it fixes anymore. This is now handled in the LSP section.
 
 *** Imenu-list
 
@@ -706,17 +724,20 @@ While we're here let's configure ~M-t~ to use trigger imenu.
   ;; forcing a static modeline causes tramp mode to get fast again
   (use-package projectile
     :config (setq projectile-dynamic-mode-line nil)
-    (projectile-global-mode)
+    (projectile-mode +1)
     :bind-keymap ("C-c p" . projectile-command-map)
     :bind (("M-o" . projectile-find-file)
            ("C-S-g" . projectile-grep))
     :init (setq projectile-completion-system 'ivy))
 
-  (use-package ag)
+  (use-package ag
+    :defer t)
 
   (use-package projectile-rails
+    :defer t
     :config (projectile-rails-global-mode t))
-  (use-package projectile-ripgrep)
+  (use-package projectile-ripgrep
+    :defer t)
 #+end_src
 
 *** Direnv
@@ -784,7 +805,11 @@ following the link and opening the original file in Emacs.
 
 #+begin_src emacs-lisp
   (setq vc-follow-symlinks t)
+  ;; Declare function to avoid warnings
+  (declare-function magit-display-buffer-fullframe-status-v1 "magit")
+  
   (use-package magit
+    :defer t
     :init (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
     (setq magit-push-current-set-remote-if-missing nil)
     :bind ("C-c s" . magit-status))
@@ -834,9 +859,9 @@ project. This pretty closely my Vim config which uses ~<Space> t~ and
     :bind (("<mouse-4>" . lsp-find-definition)
            ("S-<down-mouse-1>" . lsp-find-definition)
            ("S-<down-mouse-2>" . lsp-find-references)
-           ("<mouse-5>" . xref-pop-marker-stack)
+           ("<mouse-5>" . xref-go-back)
            ("<f12>" . lsp-find-references)
-           ("s-'" . xref-pop-marker-stack))
+           ("s-'" . xref-go-back))
     :bind-keymap ("C-c l" . lsp-command-map))
 
   (use-package lsp-ivy
@@ -1017,9 +1042,14 @@ there's no shortcut for uncommenting a region, which is bonkers.
       (format "make test-all TESTS=\"%s\"" (buffer-file-name)))
      ))
 
-  (projectile-register-project-type 'cruby '("ruby.c" "kernel.rb" "yjit.c" )
-                                    :compile 'cruby/compile-command
-                                    :test 'cruby/test-command)
+  ;; Declare function to avoid warnings
+  (declare-function projectile-register-project-type "projectile")
+  
+  ;; Register project type after projectile is loaded
+  (with-eval-after-load 'projectile
+    (projectile-register-project-type 'cruby '("ruby.c" "kernel.rb" "yjit.c" )
+                                      :compile 'cruby/compile-command
+                                      :test 'cruby/test-command))
 
 (use-package meson-mode)
 #+end_src
@@ -1040,8 +1070,7 @@ Most of the useful stuff is actually defined in the lsp-mode section.
                 ("C-c C-c a" . lsp-execute-code-action)
                 ("C-c C-c r" . lsp-rename)
                 ("C-c C-c s" . lsp-rust-analyzer-status))
-    :config (setq lsp-eldoc-hook nil
-                  lsp-enable-symbol-highlighting nil
+    :config (setq lsp-enable-symbol-highlighting nil
                   lsp-signature-auto-activate nil
                   rustic-format-on-save nil)
             (add-hook 'rustic-mode-hook 'mvh/rustic-mode-hook))
@@ -1061,7 +1090,8 @@ I use R generally for a bit of light stats munging. These days its mostly taking
 benchmark results of perf numbers of the Ruby VM and visualising them.
 
 #+begin_src emacs-lisp
-  (use-package ess)
+  (use-package ess
+    :defer t)
 #+end_src
 
 *** Web (js/html/css)
@@ -1092,7 +1122,8 @@ files that look a lot like they could be web adjacent and configure a consistent
 An experiment with Zig.
 
 #+begin_src emacs-lisp
-  (use-package zig-mode)
+  (use-package zig-mode
+    :defer t)
 #+end_src
 
 *** Markup (Markdown/toml/yaml)
@@ -1180,6 +1211,7 @@ file.
 
 #+begin_src emacs-lisp
     (use-package org-journal
+      :defer t
       :init (setq org-journal-prefix-key "C-c j ")
       :custom (org-journal-dir "~/git/notes/log_book/")
               (org-journal-file-format "%Y/%m/%d")
@@ -1200,6 +1232,7 @@ This is still **in progress**
 
 #+begin_src emacs-lisp
   (use-package org-static-blog
+    :defer t
     :init
     (setq org-static-blog-use-preview t
           org-static-blog-preview-convert-titles t
@@ -1298,7 +1331,12 @@ I usually listen to Albums, so my workflow looks a bit like this:
 
 #+begin_src  emacs-lisp
   (use-package mpc
+    :defer t
     :init
+    ;; Declare functions to avoid warnings
+    (declare-function mpc-select-toggle "mpc")
+    (declare-function mpc-playlist-add "mpc")
+    (declare-function mpc-tagbrowser-all-p "mpc")
     (defun ebr/mpc-unselect-all (&optional event)
       "Unselect all selected songs in the current mpc buffer."
       (interactive)

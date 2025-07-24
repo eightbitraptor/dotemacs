@@ -1,7 +1,7 @@
-#+TITLE Main Emacs Configuration File
-#+AUTHOR Matthew Valentine-House
+#+TITLE: Main Emacs Configuration File
+#+AUTHOR: Matthew Valentine-House
 #+PROPERTY: header-args:emacs-lisp :tangle init.el :mkdirp yes
-#+STARTUP overview
+#+STARTUP: overview
 
 * Emacs config - eightbitraptor
 :PROPERTIES:
@@ -153,7 +153,6 @@ for consistency. This is important on macOS where processes are started with a
 different environment.
 
 #+begin_src emacs-lisp
-  ;;; init.el --- Main configuration -*- lexical-binding: t; -*-
   (use-package exec-path-from-shell
     :if (memq system-type '(darwin gnu/linux))
     :init (setq exec-path-from-shell-variables '("PATH"
@@ -766,6 +765,7 @@ with a more flexible and performant system that works with any completion UI.
 
     ;; Enable nerd-icons integration
     (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
+#+end_src
 
 
 **** Consult
@@ -928,44 +928,83 @@ useful. And we use them at work, so I guess I'll just deal with it.
 
 ** Programming Utilities
 
-*** Company mode
+*** Corfu and Cape
 
-Company mode handles intelligent auto-completion with LSP integration.
-The configuration prioritizes LSP completions via completion-at-point-functions (capf),
-provides tab-triggered completion with fallback to indentation, and includes
-performance optimizations. Company-box enhances the UI with icons and better
-visual presentation of completion candidates.
+Corfu is a modern completion-at-point framework that integrates seamlessly with
+the native Emacs completion system. Unlike Company, Corfu leverages the built-in
+completion infrastructure, making it lighter and more consistent with our modern
+completion stack (Vertico, Orderless, Consult).
+
+Cape (Completion At Point Extensions) provides additional completion backends
+that work with Corfu, offering features like file path completion, dabbrev
+expansion, and more.
 
 #+begin_src emacs-lisp
-      (use-package company
-        :init (setq company-dabbrev-downcase nil
-                    company-idle-delay 0.2  ; Small delay for better performance
-                    company-minimum-prefix-length 2  ; Don't complete single chars
-                    company-dabbrev-ignore-case 1
-                    ;; Prioritize LSP completions via capf, with fallbacks
-                    company-backends '((company-capf company-dabbrev-code) company-dabbrev))
-        :hook (prog-mode . company-mode)
+      (use-package corfu
+        :demand t
+        :init
+        ;; Enable Corfu globally
+        (global-corfu-mode)
         :config
-        ;; Tab completion with fallback to indentation
-        (defun tab-or-complete ()
-          "Complete if company is active, otherwise indent."
-          (interactive)
-          (if (company-manual-begin)
-              (company-complete-selection)
-            (indent-for-tab-command)))
+        ;; Configure Corfu
+        (setq corfu-cycle t                ; Enable cycling for `corfu-next/previous'
+              corfu-auto t                 ; Enable auto completion
+              corfu-auto-delay 0.2         ; Small delay for better performance
+              corfu-auto-prefix 2          ; Minimum prefix length for auto completion
+              corfu-separator ?\s          ; Orderless field separator
+              corfu-quit-no-match 'separator ; Quit at field separator
+              corfu-preview-current nil    ; Disable current candidate preview
+              corfu-preselect 'prompt      ; Preselect the prompt
+              corfu-on-exact-match nil     ; Configure handling of exact matches
+              corfu-scroll-margin 5)       ; Use scroll margin
 
-        ;; Bind tab for completion selection when company is active
-        (define-key company-active-map (kbd "TAB") 'company-complete-selection)
-        (define-key company-active-map (kbd "<tab>") 'company-complete-selection)
+        ;; Enable Corfu in the minibuffer
+        (defun corfu-enable-in-minibuffer ()
+          "Enable Corfu in the minibuffer if `completion-at-point' is bound."
+          (when (where-is-internal #'completion-at-point (list (current-local-map)))
+            (setq-local corfu-auto nil)    ; Disable auto completion in minibuffer
+            (corfu-mode 1)))
+        (add-hook 'minibuffer-setup-hook #'corfu-enable-in-minibuffer)
 
-        ;; Global tab binding for when company isn't active
-        (global-set-key (kbd "TAB") 'tab-or-complete))
+        ;; TAB cycle if there are only few candidates
+        (setq completion-cycle-threshold 3)
 
-      (use-package company-box
-        :hook (company-mode . company-box-mode)
-        :init (setq company-box-show-single-candidate t
-                    company-box-max-candidates 10  ; Limit candidates for performance
-                    company-tooltip-align-annotations t))
+        ;; Enable indentation+completion using the TAB key
+        (setq tab-always-indent 'complete)
+
+        ;; Recommended key bindings for Corfu
+        (define-key corfu-map (kbd "TAB") 'corfu-next)
+        (define-key corfu-map (kbd "[tab]") 'corfu-next)
+        (define-key corfu-map (kbd "S-TAB") 'corfu-previous)
+        (define-key corfu-map (kbd "[backtab]") 'corfu-previous))
+
+      ;; Use Dabbrev with Corfu
+      (use-package dabbrev
+        ;; Swap M-/ and C-M-/
+        :bind (("M-/" . dabbrev-completion)
+               ("C-M-/" . dabbrev-expand))
+        :config
+        (setq dabbrev-ignored-buffer-regexps '("\\.\\(?:pdf\\|jpe?g\\|png\\)\\'")))
+
+      ;; Cape provides Completion At Point Extensions
+      (use-package cape
+        :init
+        ;; Add `completion-at-point-functions', used by `completion-at-point'.
+        ;; NOTE: The order matters!
+        (add-to-list 'completion-at-point-functions #'cape-file)
+        (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+
+        ;; Silence the pcomplete capf, no errors or messages!
+        (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
+
+        ;; Ensure that pcomplete does not write to the buffer
+        (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
+
+      ;; Corfu terminal support for non-graphical Emacs
+      (use-package corfu-terminal
+        :if (not (display-graphic-p))
+        :config
+        (corfu-terminal-mode +1))
 
 #+end_src
 
@@ -1007,7 +1046,6 @@ go-to-definition, ~M-,~ for go-back) for call stack navigation. This creates a
 comprehensive code navigation system that scales from buffer to project scope.
 
 #+begin_src emacs-lisp
-
   (use-package flycheck)
 
   (use-package lsp-mode

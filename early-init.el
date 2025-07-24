@@ -100,6 +100,27 @@
       (when (or (not (file-exists-p init-path))
                 (file-newer-than-file-p readme-path init-path))
         (message "Tangling README.org...")
+        ;; Ensure org-babel is properly initialized before tangling
+        (require 'ob-tangle)
+        (require 'org-src)  ; Ensure org-src is loaded
+        (org-babel-do-load-languages
+         'org-babel-load-languages
+         '((emacs-lisp . t)))
+        ;; Set coderef format to avoid nil errors
+        (setq org-coderef-label-format "(ref:%s)")
+        
+        ;; Patch org-src-coderef-regexp to handle nil format gracefully
+        (with-eval-after-load 'org-src
+          (defun org-src-coderef-regexp-patched (fmt &optional label)
+            "Patched version that handles nil FMT gracefully."
+            (when fmt
+              (format "\\([ \t]*\\(%s\\)[ \t]*\\)$"
+                      (replace-regexp-in-string
+                       "%s"
+                       (if label (regexp-quote label) "\\([-a-zA-Z0-9_][-a-zA-Z0-9_ ]*\\)")
+                       (regexp-quote fmt)
+                       nil t))))
+          (advice-add 'org-src-coderef-regexp :override #'org-src-coderef-regexp-patched))
         (org-babel-tangle-file readme-path init-path)
         ;; Remove any old byte-compiled file when we retangle
         (when (file-exists-p init-elc-path)

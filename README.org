@@ -293,9 +293,10 @@ in early-init.el for faster startup and a clean looking frame.
 
 #+begin_src emacs-lisp
   (setq-default cursor-type 'bar)
-  (toggle-scroll-bar -1)
+  (when (display-graphic-p)
+    (toggle-scroll-bar -1)
+    (tool-bar-mode 0))
   (menu-bar-mode 0)
-  (tool-bar-mode 0)
 #+end_src
 
 Don't display text in the startup buffer or the scratch buffer by default
@@ -338,15 +339,16 @@ https://www.reddit.com/r/emacs/comments/9c0a4d/tip_setting_initial_frame_size_an
   ;; Set initial frame size and position
 
   (defun mvh/set-initial-frame ()
-    (let* ((base-factor 0.85)
-           (primary-monitor-actual-width
-            (nth 3 (assoc 'geometry (car (display-monitor-attributes-list)))))
-         (a-width (* primary-monitor-actual-width base-factor))
-         (a-height (* (display-pixel-height) base-factor))
-         (a-left (truncate (/ (- primary-monitor-actual-width a-width) 2)))
-         (a-top (truncate (/ (- (display-pixel-height) a-height) 2))))
-      (set-frame-position (selected-frame) a-left a-top)
-      (set-frame-size (selected-frame) (truncate a-width)  (truncate a-height) t)))
+    (when (display-graphic-p)
+      (let* ((base-factor 0.85)
+             (primary-monitor-actual-width
+              (nth 3 (assoc 'geometry (car (display-monitor-attributes-list)))))
+           (a-width (* primary-monitor-actual-width base-factor))
+           (a-height (* (display-pixel-height) base-factor))
+           (a-left (truncate (/ (- primary-monitor-actual-width a-width) 2)))
+           (a-top (truncate (/ (- (display-pixel-height) a-height) 2))))
+        (set-frame-position (selected-frame) a-left a-top)
+        (set-frame-size (selected-frame) (truncate a-width)  (truncate a-height) t))))
   (mvh/set-initial-frame)
 #+end_src
 
@@ -577,11 +579,12 @@ legible on the recording.
 
 #+begin_src emacs-lisp
   (defun my-alter-frame-font-size (fn)
-    (let* ((current-font-name (frame-parameter nil 'font))
-           (decomposed-font-name (x-decompose-font-name current-font-name))
-           (font-size (string-to-number (aref decomposed-font-name 5))))
-      (aset decomposed-font-name 5 (number-to-string (funcall fn font-size)))
-      (set-frame-font (x-compose-font-name decomposed-font-name))))
+    (when (display-graphic-p)
+      (let* ((current-font-name (frame-parameter nil 'font))
+             (decomposed-font-name (x-decompose-font-name current-font-name))
+             (font-size (string-to-number (aref decomposed-font-name 5))))
+        (aset decomposed-font-name 5 (number-to-string (funcall fn font-size)))
+        (set-frame-font (x-compose-font-name decomposed-font-name)))))
 
   (defun my-inc-frame-font-size ()
     (interactive)
@@ -741,12 +744,16 @@ better performance and integration.
     (vertico-mode)
 
     ;; Performance and UX optimizations
-    (setq vertico-count 15          ; Balanced count for performance with icons
+    (setq vertico-count (if (display-graphic-p) 15 8)  ; Fewer lines in terminal
           vertico-resize nil        ; Keep minibuffer height fixed
           vertico-cycle t)          ; Cycle through completions
 
     ;; Enable recursive minibuffers for complex operations
-    (setq enable-recursive-minibuffers t))
+    (setq enable-recursive-minibuffers t)
+
+    ;; Control minibuffer window height
+    (setq max-mini-window-height 0.3)  ; Max 30% of frame height
+    (setq resize-mini-windows t))       ; Allow resizing but respect max
 #+end_src
 
 **** Marginalia

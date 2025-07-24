@@ -134,6 +134,20 @@ autoloads and saves them to a file that loads quickly.
     (add-to-list 'load-path (expand-file-name "straight/build/" user-emacs-directory)))
 #+end_src
 
+*** Tree-sitter Setup
+
+Enable modern Tree-sitter based syntax parsing for better accuracy and performance.
+treesit-auto automatically installs Tree-sitter grammars and enables Tree-sitter
+modes for supported languages, replacing traditional modes with more precise parsing.
+
+#+begin_src emacs-lisp
+  (use-package treesit-auto
+    :demand t
+    :config
+    (treesit-auto-add-to-auto-mode-alist 'all)
+    (global-treesit-auto-mode))
+#+end_src
+
 *** Setting up the PATH
 
 I like to make sure that Emacs is using the same PATH and Ruby paths as my shell
@@ -885,7 +899,7 @@ comprehensive code navigation system that scales from buffer to project scope.
                                             "--background-index"))
     :hook ((c-mode . lsp)
            (c++-mode . lsp)
-           (enh-ruby-mode . lsp)
+           (ruby-ts-mode . lsp)
            (rustic-mode . lsp)
            (lsp-mode . lsp-enable-which-key-integration))
     :bind (("<mouse-4>" . lsp-find-definition)
@@ -991,62 +1005,84 @@ I also use minitest for testing.
     (use-package minitest :ensure t)
 #+end_src
 
-I use enh-ruby-mode instead of the built in ruby-mode. This is entirely due to
-the existence of enh-ruby-bounce-deep-indent
+Ruby support is now handled by Tree-sitter via ruby-ts-mode, which provides
+superior syntax parsing and highlighting compared to traditional regex-based modes.
+treesit-auto automatically activates ruby-ts-mode for Ruby files and installs
+the required Tree-sitter grammar on first use.
 
-ruby-mode's default behaviour is to do this:
+#+begin_src emacs-lisp
+  ;; Configure Ruby Tree-sitter mode with equivalent functionality to enh-ruby-mode
+  (use-package ruby-ts-mode
+    :hook (ruby-ts-mode . subword-mode)
+    :config
+    ;; Disable encoding magic comments (equivalent to enh-ruby-add-encoding-comment-on-save nil)
+    (setq ruby-insert-encoding-magic-comment nil)
 
-#+begin_src ruby :tangle no
-  test_var = if condition
+    ;; Set hanging brace indent level (equivalent to enh-ruby-hanging-brace-indent-level 2)
+    (setq ruby-method-params-indent 2)
+
+    ;; Enable case-insensitive search in Ruby buffers
+    (add-hook 'ruby-ts-mode-hook (lambda () (setq case-fold-search t)))
+
+    ;; Configure indentation preferences
+    (setq ruby-indent-level 2)
+    (setq ruby-indent-tabs-mode nil)
+    (setq ruby-align-chained-calls t)
+    (setq ruby-deep-indent-paren nil) ; Start with shallow indenting
+
+    ;; Implement enh-ruby-bounce-deep-indent equivalent for ruby-ts-mode
+    (defun ruby-ts-bounce-deep-indent ()
+      "Toggle between deep and shallow indentation styles, similar to enh-ruby-bounce-deep-indent."
+      (interactive)
+      (let ((col (current-column)))
+        (setq ruby-deep-indent-paren (not ruby-deep-indent-paren)
+              ruby-deep-indent-paren-style (and ruby-deep-indent-paren 'opening))
+        (message "Ruby: Using %s indentation"
+                 (if ruby-deep-indent-paren "deep" "shallow"))
+        (save-excursion
+          (beginning-of-line)
+          (delete-horizontal-space)
+          (ruby-indent-line))
+        (move-to-column col)))
+
+    ;; Override TAB in ruby-ts-mode to include bounce functionality
+    (defun ruby-ts-tab-or-bounce ()
+      "Indent line, or toggle indentation style if already indented."
+      (interactive)
+      (if (= (current-indentation)
+             (or (save-excursion
+                   (beginning-of-line)
+                   (ruby-calculate-indent)) 0))
+          (ruby-ts-bounce-deep-indent)
+        (ruby-indent-line)))
+
+    ;; Bind TAB to our bounce function in ruby-ts-mode
+    (define-key ruby-ts-mode-map (kbd "TAB") 'ruby-ts-tab-or-bounce))
+#+end_src
+
+Tree-sitter provides more accurate indentation and syntax highlighting than
+the previous enh-ruby-mode, with better performance through incremental parsing.
+The custom `ruby-ts-bounce-deep-indent` function replicates the enh-ruby-mode
+bounce functionality, allowing you to toggle between deep and shallow indentation
+styles with TAB when a line is already properly indented.
+
+**Deep indentation** (ruby-deep-indent-paren = t):
+```ruby
+test_var = if condition
              "yes"
            else
              "no"
            end
-#+end_src
+```
 
-Whereas enh-ruby-mode will let you toggle between that, and my preferred format
-with another press of the tab key
-
-#+begin_src ruby :tangle no
-  test_var = if condition
-    "yes"
-  else
-    "no"
-  end
-#+end_src
-
-There's a small amount of customisation happening here
-
-- Make sure that we don't add encoding comments to our files. Generally I don't
-  want anything in the git diff, other than what I'm explicitly changing.
-- The magic enh-ruby-bounce-deep-indent as well as clearing out the list of deep
-  indent constructs so that we default to my preferred way. Normally if, def,
-  class and module are deep indented by default
-- Turn on case-fold-search, this means that searching is basically case
-  insensitive.
-- Makes sure that Ruby mode is activated for things that might not look like
-  Ruby files: rack configs, Rakefiles, Gemfiles etc.
-
-And some other things that I need to look into
-
-- [ ] Do I really want case-fold-search to be turned on?
-- [ ] What does enh-ruby-hanging-brace-indent-level do?
-
-#+begin_src emacs-lisp
-  (use-package enh-ruby-mode
-    :mode "\\.rb"
-          "\\Gemfile"
-          "\\.ru"
-          "\\Rakefile"
-          "\\.rake"
-    :hook (enh-ruby-mode . subword-mode)
-    :config (setq ruby-insert-encoding-magic-comment nil
-                  enh-ruby-add-encoding-comment-on-save nil
-                  enh-ruby-bounce-deep-indent t
-                  enh-ruby-deep-indent-construct nil
-                  enh-ruby-hanging-brace-indent-level 2
-                  case-fold-search t))
-#+end_src
+**Shallow indentation** (ruby-deep-indent-paren = nil):
+```ruby
+test_var = if condition
+  "yes"
+else
+  "no"
+end
+```
 
 *** C
 
@@ -1084,7 +1120,7 @@ there's no shortcut for uncommenting a region, which is bonkers.
     "Returns a String representing the test command to run for the given context"
     (cond
      ((eq major-mode 'c-mode) "make btest")
-     ((eq major-mode 'enh-ruby-mode)
+     ((eq major-mode 'ruby-ts-mode)
       (format "make test-all TESTS=\"%s\"" (buffer-file-name)))
      ))
 

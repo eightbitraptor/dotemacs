@@ -946,6 +946,11 @@ Cape (Completion At Point Extensions) provides additional completion backends
 that work with Corfu, offering features like file path completion, dabbrev
 expansion, and more.
 
+The configuration below customizes Tab behavior to automatically complete when
+there's only a single candidate, while cycling through multiple candidates when
+available. Tab will wrap around from the last candidate back to the first.
+Shift-Tab cycles backwards through the completion list.
+
 #+begin_src emacs-lisp
       (use-package corfu
         :demand t
@@ -979,11 +984,18 @@ expansion, and more.
         ;; Enable indentation+completion using the TAB key
         (setq tab-always-indent 'complete)
 
-        ;; Recommended key bindings for Corfu
-        (define-key corfu-map (kbd "TAB") 'corfu-next)
-        (define-key corfu-map (kbd "[tab]") 'corfu-next)
+        (defun mvh/corfu-complete-or-next ()
+          "Complete if single candidate, otherwise cycle to next."
+          (interactive)
+          (if (= corfu--total 1)
+              (corfu-complete)
+            (corfu-next)))
+
+        (define-key corfu-map (kbd "TAB") 'mvh/corfu-complete-or-next)
+        (define-key corfu-map (kbd "[tab]") 'mvh/corfu-complete-or-next)
         (define-key corfu-map (kbd "S-TAB") 'corfu-previous)
-        (define-key corfu-map (kbd "[backtab]") 'corfu-previous))
+        (define-key corfu-map (kbd "[backtab]") 'corfu-previous)
+        (define-key corfu-map (kbd "<backtab>") 'corfu-previous))
 
       ;; Use Dabbrev with Corfu
       (use-package dabbrev

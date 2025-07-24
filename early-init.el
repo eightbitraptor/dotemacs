@@ -1,5 +1,19 @@
 ;;; early-init.el --- Early initialization -*- lexical-binding: t; -*-
 
+;; Enable native compilation with dynamic GCC library detection
+(when (and (fboundp 'native-comp-available-p) (native-comp-available-p))
+  (setq native-comp-jit-compilation t)
+  (setq native-comp-deferred-compilation t)
+  (setq native-comp-async-report-warnings-errors nil)
+  (setq native-comp-speed 2)
+  ;; macOS: Dynamically find GCC emutls library for native compilation
+  (when (eq system-type 'darwin)
+    (let ((emutls-path (string-trim
+                        (shell-command-to-string
+                         "find /opt/homebrew/Cellar/gcc -name 'libemutls_w.a' 2>/dev/null | sort -V | tail -1 | xargs dirname 2>/dev/null"))))
+      (when (and emutls-path (not (string-empty-p emutls-path)))
+        (setq native-comp-driver-options (list (concat "-L" emutls-path) "-lemutls_w"))))))
+
 ;; Performance optimizations - set these as early as possible
 (setq gc-cons-threshold (* 50 1000 1000)) ; 50MB during init
 (setq gc-cons-percentage 0.6)
@@ -24,27 +38,15 @@
             (message "Emacs loaded in %s with %d garbage collections."
                      (emacs-init-time) gcs-done)))
 
-(defun my-append-env-var (var-name value)
-  "Append VALUE to the beginning of current value of env variable VAR-NAME."
-  (setenv var-name (if (getenv var-name)
-                       (format "%s:%s" value (getenv var-name))
-                     value)))
-;; Set up library locations for native compilation on macOS
-(let ((gccjitpath "/opt/homebrew/lib/gcc/11:/opt/homebrew/lib"))
-  (mapc (lambda (var-name) (my-append-env-var var-name gccjitpath))
-        '("LIBRARY_PATH" "LD_LIBRARY_PATH" "PATH")))
-
-;; Disable native-comp error/warning reporting
-(setq native-comp-async-report-warnings-errors nil)
-(setq native-comp-jit-compilation t) ; Use the modern variable name
-
 ;; Switch to the most updated version of org as early as possible
 (add-to-list 'load-path (expand-file-name "~/.emacs.d/straight/build/org"))
 
 ;; Disable package.el in favor of straight.el
 (setq package-enable-at-startup nil)
 
-(add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
+;; macOS-specific UI settings
+(when (eq system-type 'darwin)
+  (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t)))
 
 ;; Bootstrap straight.el
 (defvar bootstrap-version)

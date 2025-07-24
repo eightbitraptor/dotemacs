@@ -1,5 +1,6 @@
 #+TITLE Main Emacs Configuration File
 #+AUTHOR Matthew Valentine-House
+#+PROPERTY: header-args:emacs-lisp :tangle init.el :mkdirp yes
 #+STARTUP overview
 
 * Emacs config - eightbitraptor
@@ -44,6 +45,7 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
     - [[#quickly-change-frame-font-sizes][Quickly change frame font sizes]]
   - [[#keybindings][Keybindings]]
     - [[#custom-functions][Custom functions]]
+    - [[#enhanced-navigation][Enhanced Navigation]]
     - [[#remap-m-x][Remap M-x]]
     - [[#resizing-windows][Resizing windows]]
     - [[#maximise-frames][Maximise frames]]
@@ -121,27 +123,15 @@ well; It doesn't really bother me enough to fix it.
 *** Performance and Startup Optimizations
 
 Enable package quickstart for faster startup times. This pre-computes package
-autoloads and saves them to a file that loads quickly. We also ensure straight.el
-packages can be found during compilation and set up automatic byte-compilation
-of the tangled init.el file after all packages are loaded for better performance.
+autoloads and saves them to a file that loads quickly.
 
 #+begin_src emacs-lisp
   ;; Enable package quickstart (must be near the beginning)
   (setq package-quickstart t)
 
-  ;; Startup time reporting is handled in early-init.el
-
   ;; Ensure straight.el packages can be found
   (eval-when-compile
     (add-to-list 'load-path (expand-file-name "straight/build/" user-emacs-directory)))
-
-  ;; Byte-compile init.el after all packages are loaded
-  (add-hook 'after-init-hook
-            (lambda ()
-              (let ((init-el (expand-file-name "init.el" user-emacs-directory)))
-                (when (and (file-exists-p init-el)
-                           (not (file-exists-p (concat init-el "c"))))
-                  (byte-compile-file init-el)))))
 #+end_src
 
 *** Setting up the PATH
@@ -574,6 +564,22 @@ First map some of the aformentioned custom functions.
   (global-set-key (kbd "C--") 'my-dec-frame-font-size)
 #+end_src
 
+*** Enhanced Navigation
+
+Add standard Emacs navigation bindings for better call stack navigation.
+These work alongside the existing M-t/M-T fuzzy search setup.
+
+#+begin_src emacs-lisp
+  ;; Standard xref navigation bindings
+  (global-set-key (kbd "M-.") 'xref-find-definitions)     ; Go to definition
+  (global-set-key (kbd "M-,") 'xref-go-back)             ; Go back in stack
+  (global-set-key (kbd "M-?") 'xref-find-references)     ; Find references
+  (global-set-key (kbd "C-M-.") 'xref-find-apropos)      ; Find symbols matching pattern
+
+  ;; Additional navigation helpers
+  (global-set-key (kbd "C-M-,") 'xref-go-forward)        ; Go forward in stack (if available)
+#+end_src
+
 *** Remap M-x
 
 This is something I learned from [[https://sites.google.com/site/steveyegge2/effective-emacs][Steve Yegge's excellent blog post
@@ -772,21 +778,42 @@ useful. And we use them at work, so I guess I'll just deal with it.
 
 *** Company mode
 
-Company mode handles tab completion for me. Not much extra config
-here, mostly just the reduction of some delays, so it appears quicker,
-and the addition of company box, which is analagous to ivy-rich for
-ivy. It pretties up the UI, and provides icons and stuff depending on
-what's being completed, and also can link out to docs.
+Company mode handles intelligent auto-completion with LSP integration.
+The configuration prioritizes LSP completions via completion-at-point-functions (capf),
+provides tab-triggered completion with fallback to indentation, and includes
+performance optimizations. Company-box enhances the UI with icons and better
+visual presentation of completion candidates.
 
 #+begin_src emacs-lisp
       (use-package company
         :init (setq company-dabbrev-downcase nil
-                    company-idle-delay 0
-                    company-dabbrev-ignore-case 1)
-        :hook (prog-mode . company-mode))
+                    company-idle-delay 0.2  ; Small delay for better performance
+                    company-minimum-prefix-length 2  ; Don't complete single chars
+                    company-dabbrev-ignore-case 1
+                    ;; Prioritize LSP completions via capf, with fallbacks
+                    company-backends '((company-capf company-dabbrev-code) company-dabbrev))
+        :hook (prog-mode . company-mode)
+        :config
+        ;; Tab completion with fallback to indentation
+        (defun tab-or-complete ()
+          "Complete if company is active, otherwise indent."
+          (interactive)
+          (if (company-manual-begin)
+              (company-complete-selection)
+            (indent-for-tab-command)))
+
+        ;; Bind tab for completion selection when company is active
+        (define-key company-active-map (kbd "TAB") 'company-complete-selection)
+        (define-key company-active-map (kbd "<tab>") 'company-complete-selection)
+
+        ;; Global tab binding for when company isn't active
+        (global-set-key (kbd "TAB") 'tab-or-complete))
 
       (use-package company-box
-        :hook (company-mode . company-box-mode))
+        :hook (company-mode . company-box-mode)
+        :init (setq company-box-show-single-candidate t
+                    company-box-max-candidates 10  ; Limit candidates for performance
+                    company-tooltip-align-annotations t))
 
 #+end_src
 
@@ -807,7 +834,7 @@ following the link and opening the original file in Emacs.
   (setq vc-follow-symlinks t)
   ;; Declare function to avoid warnings
   (declare-function magit-display-buffer-fullframe-status-v1 "magit")
-  
+
   (use-package magit
     :defer t
     :init (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
@@ -817,32 +844,37 @@ following the link and opening the original file in Emacs.
 
 *** LSP
 
-LSP configuration is slightly frustrating, because due to the way existence of a
-single lsp-client mode that talks to multiple lsp-servers I need to configure
-the servers here.
+LSP configuration provides intelligent IDE-like features across multiple languages
+(C, Ruby, and Rust). The configuration optimizes for performance with reasonable
+delays, enables intelligent completion via completion-at-point-functions, and
+includes signature help for function parameters.
 
-This means that this lsp-mode config block contains config that's relevant to
-multiple different languages. Predominantly C, Ruby and Rust.
-
-As a companion to using ~M-t~ to trigger ~imenu~ earlier in my
-config. We'll mape ~M-T~ here to ~lsp-ivy-workspace-symbol~ so we can
-use ~M-t~ when we want to fuzzy jump to a symbol in the buffer, and
-~M-T~ when we want to do the same but somwhere else in the
-project. This pretty closely my Vim config which uses ~<Space> t~ and
-~<Space> T~ for the same.
+Navigation works on multiple levels: ~M-t~ for buffer-scope symbol search via imenu,
+~M-T~ for project-wide workspace symbols, and standard Emacs bindings (~M-.~ for
+go-to-definition, ~M-,~ for go-back) for call stack navigation. This creates a
+comprehensive code navigation system that scales from buffer to project scope.
 
 #+begin_src emacs-lisp
 
   (use-package flycheck)
 
   (use-package lsp-mode
-    :config (setq lsp-idle-delay 0.1
+    :config (setq lsp-idle-delay 0.3  ; More reasonable delay for better performance
                   lsp-headerline-breadcrumb-enable nil
                   lsp-enable-on-type-formatting nil
                   lsp-enable-indentation nil
                   lsp-solargraph-formatting nil
                   lsp-eldoc-enable-hover nil
                   lsp-enable-snippets nil
+                  ;; Optimize completion settings
+                  lsp-completion-provider :capf
+                  lsp-completion-enable t
+                  lsp-completion-show-detail t
+                  lsp-completion-show-kind t
+                  ;; Enable signature help for function parameters
+                  lsp-signature-auto-activate t
+                  lsp-signature-render-documentation nil  ; Keep signatures concise
+                  ;; Language server specific settings
                   lsp-rust-analyzer-cargo-watch-command "clippy"
                   lsp-rust-analyzer-server-display-inlay-hints t
                   lsp-enabled-clients '(clangd
@@ -887,11 +919,25 @@ project. This pretty closely my Vim config which uses ~<Space> t~ and
     :config (setq lsp-ui-sideline-mode nil
                   lsp-ui-flycheck-live-reporting nil
                   lsp-ui-sideline-enable nil
-                  lsp-ui-sideline-show-diagnostics nil)
+                  lsp-ui-sideline-show-diagnostics nil
+                  ;; Enable useful doc features while keeping UI clean
+                  lsp-ui-doc-enable t
+                  lsp-ui-doc-show-with-cursor nil     ; Don't show on cursor hover
+                  lsp-ui-doc-show-with-mouse t        ; Show on mouse hover
+                  lsp-ui-doc-delay 0.5                ; Small delay for docs
+                  lsp-ui-doc-max-height 20            ; Reasonable doc window size
+                  lsp-ui-doc-max-width 80
+                  ;; Peek window settings
+                  lsp-ui-peek-always-show t
+                  lsp-ui-peek-list-width 40
+                  lsp-ui-peek-peek-height 15)
     :bind (:map
            lsp-mode-map
            ([remap xref-find-definitions] . #'lsp-ui-peek-find-definitions)
-           ([remap xref-find-references] . #'lsp-ui-peek-find-references)))
+           ([remap xref-find-references] . #'lsp-ui-peek-find-references)
+           ;; Additional useful bindings
+           ("C-c l d" . #'lsp-ui-doc-show)         ; Show docs on demand
+           ("C-c l i" . #'lsp-ui-imenu)))           ; LSP imenu
 #+end_src
 
 While we're on ~xref~ and stuff. Let's also make is so that searching
@@ -1044,7 +1090,7 @@ there's no shortcut for uncommenting a region, which is bonkers.
 
   ;; Declare function to avoid warnings
   (declare-function projectile-register-project-type "projectile")
-  
+
   ;; Register project type after projectile is loaded
   (with-eval-after-load 'projectile
     (projectile-register-project-type 'cruby '("ruby.c" "kernel.rb" "yjit.c" )

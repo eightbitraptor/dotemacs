@@ -20,4 +20,6 @@ autosave
 
 tree-sitter
 
+gcc-emutls-path
+
 *~

@@ -6,13 +6,25 @@
   (setq native-comp-deferred-compilation t)
   (setq native-comp-async-report-warnings-errors nil)
   (setq native-comp-speed 2)
-  ;; macOS: Dynamically find GCC emutls library for native compilation
+  ;; macOS: Cache GCC emutls library path for native compilation
   (when (eq system-type 'darwin)
-    (let ((emutls-path (string-trim
-                        (shell-command-to-string
-                         "find /opt/homebrew/Cellar/gcc -name 'libemutls_w.a' 2>/dev/null | sort -V | tail -1 | xargs dirname 2>/dev/null"))))
-      (when (and emutls-path (not (string-empty-p emutls-path)))
-        (setq native-comp-driver-options (list (concat "-L" emutls-path) "-lemutls_w"))))))
+    (defvar mvh/gcc-emutls-cache-file (expand-file-name "gcc-emutls-path" user-emacs-directory))
+    (let ((cached-path (when (file-exists-p mvh/gcc-emutls-cache-file)
+                         (with-temp-buffer
+                           (insert-file-contents mvh/gcc-emutls-cache-file)
+                           (string-trim (buffer-string))))))
+      ;; Use cache if it exists and is valid
+      (if (and cached-path (file-directory-p cached-path))
+          (setq native-comp-driver-options (list (concat "-L" cached-path) "-lemutls_w"))
+        ;; Otherwise, find it and cache it
+        (let ((emutls-path (string-trim
+                            (shell-command-to-string
+                             "find /opt/homebrew/Cellar/gcc -name 'libemutls_w.a' 2>/dev/null | sort -V | tail -1 | xargs dirname 2>/dev/null"))))
+          (when (and emutls-path (not (string-empty-p emutls-path)))
+            (setq native-comp-driver-options (list (concat "-L" emutls-path) "-lemutls_w"))
+            ;; Cache the path for next time
+            (with-temp-file mvh/gcc-emutls-cache-file
+              (insert emutls-path))))))))
 
 ;; Performance optimizations - set these as early as possible
 (setq gc-cons-threshold (* 50 1000 1000)) ; 50MB during init

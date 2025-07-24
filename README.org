@@ -54,8 +54,6 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
     - [[#which-key-tooltips][Which key tooltips]]
   - [[#navigation-search--project-management][Navigation, Search & Project Management]]
     - [[#ripgrep][Ripgrep]]
-    - [[#flx][Flx]]
-    - [[#ivy][Ivy]]
     - [[#imenu-list][Imenu-list]]
     - [[#projectile][Projectile]]
     - [[#direnv][Direnv]]
@@ -197,6 +195,38 @@ Is a more fully featured dired mode. Let's try it out for a bit
     :init (dirvish-override-dired-mode))
 #+end_src
 
+*** Icons
+
+Modern icon system using nerd-icons for completion, dired, and file trees.
+
+#+begin_src emacs-lisp
+  (use-package nerd-icons-completion
+    :hook (marginalia-mode . nerd-icons-completion-mode)
+    :init
+    ;; Enable caching for better performance
+    (setq nerd-icons-completion-cache t)
+    :config
+
+    ;; Add icon support for imenu items with caching
+    (defvar nerd-icons-imenu-icon-cache nil
+      "Cached icon string for imenu candidates.")
+
+    (cl-defmethod nerd-icons-completion-get-icon (cand (_cat (eql imenu)))
+      "Return cached icon for imenu candidates."
+      (or nerd-icons-imenu-icon-cache
+          (setq nerd-icons-imenu-icon-cache
+                (concat (nerd-icons-codicon "nf-cod-symbol_method"
+                                            :face 'font-lock-function-name-face
+                                            :height (or nerd-icons-completion-icon-size 1.0))
+                        " ")))))
+
+  (use-package nerd-icons-dired
+    :hook (dired-mode . nerd-icons-dired-mode)
+    :config
+    ;; Enable caching for better performance
+    (setq nerd-icons-dired-cache t))
+#+end_src
+
 *** Organise backup files
 
 This block turns off auto save, turns off automatic backups, and sets a backup
@@ -227,8 +257,7 @@ This feature is one of the things I really enjoyed, visually, about VSCode
 
 #+begin_src emacs-lisp
   (use-package solaire-mode
-    :demand t
-    :init (solaire-global-mode +1))
+    :hook (after-init . solaire-global-mode))
 #+end_src
 
 Now set up a theme. We need to choose a theme here that explicitly supports
@@ -313,13 +342,12 @@ https://www.reddit.com/r/emacs/comments/9c0a4d/tip_setting_initial_frame_size_an
     (let* ((base-factor 0.85)
            (primary-monitor-actual-width
             (nth 3 (assoc 'geometry (car (display-monitor-attributes-list)))))
-  	 (a-width (* primary-monitor-actual-width base-factor))
-           (a-height (* (display-pixel-height) base-factor))
-           (a-left (truncate (/ (- primary-monitor-actual-width a-width) 2)))
-  	 (a-top (truncate (/ (- (display-pixel-height) a-height) 2))))
+         (a-width (* primary-monitor-actual-width base-factor))
+         (a-height (* (display-pixel-height) base-factor))
+         (a-left (truncate (/ (- primary-monitor-actual-width a-width) 2)))
+         (a-top (truncate (/ (- (display-pixel-height) a-height) 2))))
       (set-frame-position (selected-frame) a-left a-top)
       (set-frame-size (selected-frame) (truncate a-width)  (truncate a-height) t)))
-  (setq frame-resize-pixelwise t)
   (mvh/set-initial-frame)
 #+end_src
 
@@ -677,48 +705,159 @@ on your path.
     :defer t)
 #+end_src
 
-*** Flx
+*** Modern Completion Stack
 
-Not actually sure why this is here. It does fuzzy matching, but I
-think it's either pulled in as a dep of something or I don't use it
-anymore.
+Modern completion framework using vertico, orderless, consult, marginalia, and embark.
+This replaces the ivy/counsel ecosystem with more performant and flexible alternatives.
 
-#+begin_src emacs-lisp
-  (use-package flx
-    :defer t)
-#+end_src
+**** Orderless
 
-*** Ivy
-
-Ivy is a completion framework. So when you search for stuff it'll help
-you narrow down onto the result that you're looking for.
-
-A nice write-up about it lives [[https://sam217pa.github.io/2016/09/13/from-helm-to-ivy/][here]]. And the manual is [[https://oremacs.com/swiper/][here]].
-
-I use it in conjunction with ~ivy-rich~ which makes the UI column
-based to show more information.
-
-I also use it in conjunction with ~xref~ so that when I do things like
-jumping between functions or searching for functions in source code, I
-get a nice looking list of functions and meta data about them and can
-narrow down on the one I want.
+Orderless provides flexible completion matching. Unlike ivy's built-in matching,
+orderless allows space-separated components that can match in any order, making
+it much more powerful for finding completions.
 
 #+begin_src emacs-lisp
-  (use-package ivy-rich)
-  (use-package counsel)
+  (use-package orderless
+    :demand t
+    :config
+    ;; Configure completion styles for optimal performance
+    (setq completion-styles '(orderless flex basic partial-completion)
+          completion-category-defaults nil
+          completion-category-overrides '((file (styles . (partial-completion)))))
 
-  (use-package ivy
-    :init (setq ivy-use-virtual-buffers t
-                ivy-sort-matches-functions-alist '((t . nil)
-                                                   (ivy-completion-in-region . ivy--shorter-matches-first)
-                                                   (execute-extended-command . ivy--shorter-matches-first)
-                                                   (ivy-switch-buffer . ivy-sort-function-buffer)))
-    (ivy-mode 1)
-    (ivy-rich-mode 1))
+    ;; Configure orderless matching styles - optimized for performance
+    (setq orderless-matching-styles '(orderless-literal orderless-flex)))
 #+end_src
 
-I cargo-culted this init section from somewhere and I can't remember
-what it fixes anymore. This is now handled in the LSP section.
+**** Vertico
+
+Vertico provides a clean, fast completion UI that integrates perfectly with
+Emacs' built-in completion system. It's much lighter than ivy while providing
+better performance and integration.
+
+#+begin_src emacs-lisp
+  (use-package vertico
+    :demand t
+    :config
+    (vertico-mode)
+
+    ;; Performance and UX optimizations
+    (setq vertico-count 15          ; Balanced count for performance with icons
+          vertico-resize nil        ; Keep minibuffer height fixed
+          vertico-cycle t)          ; Cycle through completions
+
+    ;; Enable recursive minibuffers for complex operations
+    (setq enable-recursive-minibuffers t))
+#+end_src
+
+**** Marginalia
+
+Marginalia adds rich annotations to completion candidates, replacing ivy-rich
+with a more flexible and performant system that works with any completion UI.
+
+#+begin_src emacs-lisp
+  (use-package marginalia
+    :demand t
+    :config
+    (marginalia-mode)
+
+    ;; Bind M-A to cycle annotation levels in minibuffer
+    (define-key minibuffer-local-map (kbd "M-A") 'marginalia-cycle)
+
+    ;; Enable nerd-icons integration
+    (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
+
+
+**** Consult
+
+Consult provides enhanced versions of many built-in commands with live previews,
+async operations, and better integration. It replaces counsel and swiper.
+
+#+begin_src emacs-lisp
+  (use-package consult
+    :demand t
+    :bind (;; C-c bindings (mode-specific-map)
+           ("C-c h" . consult-history)
+           ("C-c m" . consult-mode-command)
+           ("C-c k" . consult-kmacro)
+           ;; C-x bindings (ctl-x-map)
+           ("C-x M-:" . consult-complex-command)
+           ("C-x b" . consult-buffer)
+           ("C-x 4 b" . consult-buffer-other-window)
+           ("C-x 5 b" . consult-buffer-other-frame)
+           ("C-x r b" . consult-bookmark)
+           ;; Other custom bindings
+           ("M-y" . consult-yank-pop)
+           ;; M-g bindings (goto-map)
+           ("M-g e" . consult-compile-error)
+           ("M-g f" . consult-flymake)
+           ("M-g g" . consult-goto-line)
+           ("M-g M-g" . consult-goto-line)
+           ("M-g o" . consult-outline)
+           ("M-g m" . consult-mark)
+           ("M-g k" . consult-global-mark)
+           ("M-g i" . consult-imenu)
+           ("M-g I" . consult-imenu-multi)
+           ;; M-s bindings (search-map)
+           ("M-s d" . consult-find)
+           ("M-s D" . consult-locate)
+           ("M-s g" . consult-grep)
+           ("M-s G" . consult-git-grep)
+           ("M-s r" . consult-ripgrep)
+           ("M-s l" . consult-line)
+           ("M-s L" . consult-line-multi)
+           ("M-s m" . consult-multi-occur)
+           ("M-s k" . consult-keep-lines)
+           ("M-s u" . consult-focus-lines)
+           ;; M-t bound separately for flattened imenu
+           )
+    :hook (completion-list-mode . consult-preview-at-point-mode)
+    :config
+    ;; Configure preview and async operations
+    (setq consult-preview-key "M-."
+          consult-narrow-key "<"
+          consult-project-function (lambda (_) (projectile-project-root)))
+
+    ;; Configure async operations for performance
+    (consult-customize
+     consult-theme :preview-key '(:debounce 0.2 any)
+     consult-ripgrep consult-git-grep consult-grep
+     consult-bookmark consult-recent-file consult-xref
+     consult--source-bookmark consult--source-recent-file
+     consult--source-project-recent-file
+     :preview-key "M-.")
+
+    ;; Configure consult-imenu to be completely flat - no grouping or toplevel categories
+    (setq consult-imenu-config
+          '((t :toplevel nil :types nil)))  ; No toplevel grouping, no type categories
+
+    ;; Bind M-t to regular consult-imenu (now configured to be flat)
+    (global-set-key (kbd "M-t") 'consult-imenu))
+#+end_src
+
+**** Embark
+
+Embark provides context-sensitive actions on completion candidates, offering
+functionality not available in the ivy ecosystem. You can act on candidates
+or export them to dedicated buffers.
+
+#+begin_src emacs-lisp
+  (use-package embark
+    :defer t
+    :bind (("C-." . embark-act)
+           ("C-;" . embark-dwim)
+           ("C-h B" . embark-bindings))
+    :config
+    ;; Hide the mode line of the Embark live/completions buffers
+    (add-to-list 'display-buffer-alist
+                 '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                   nil
+                   (window-parameters (mode-line-format . none)))))
+
+  (use-package embark-consult
+    :defer t
+    :hook (embark-collect-mode . consult-preview-at-point-mode))
+#+end_src
 
 *** Imenu-list
 
@@ -729,12 +868,9 @@ bar on the right of the frame.
 
 Fair warning though. It seems to crap itself in ~org-mode~.
 
-While we're here let's configure ~M-t~ to use trigger imenu.
-
 #+begin_src emacs-lisp
   (use-package imenu-list
     :bind ("C-c C-t" . imenu-list-smart-toggle))
-  (global-set-key (kbd "M-t") 'imenu)
 #+end_src
 
 *** Projectile
@@ -748,7 +884,7 @@ While we're here let's configure ~M-t~ to use trigger imenu.
     :bind-keymap ("C-c p" . projectile-command-map)
     :bind (("M-o" . projectile-find-file)
            ("C-S-g" . projectile-grep))
-    :init (setq projectile-completion-system 'ivy))
+    :init (setq projectile-completion-system 'default))
 
   (use-package ag
     :defer t)
@@ -873,7 +1009,11 @@ comprehensive code navigation system that scales from buffer to project scope.
   (use-package flycheck)
 
   (use-package lsp-mode
-    :config (setq lsp-idle-delay 0.3  ; More reasonable delay for better performance
+    :commands (lsp lsp-deferred)
+    :init
+    (setq lsp-keymap-prefix "C-c l")
+    :config
+    (setq lsp-idle-delay 0.3  ; More reasonable delay for better performance
                   lsp-headerline-breadcrumb-enable nil
                   lsp-enable-on-type-formatting nil
                   lsp-enable-indentation nil
@@ -897,10 +1037,12 @@ comprehensive code navigation system that scales from buffer to project scope.
                   lsp-clients-clangd-args '("--header-insertion=never"
                                             "--all-scopes-completion"
                                             "--background-index"))
-    :hook ((c-mode . lsp)
-           (c++-mode . lsp)
-           (ruby-ts-mode . lsp)
-           (rustic-mode . lsp)
+    :hook ((c-mode . lsp-deferred)
+           (c++-mode . lsp-deferred)
+           (c-ts-mode . lsp-deferred)
+           (c++-ts-mode . lsp-deferred)
+           (ruby-ts-mode . lsp-deferred)
+           (rustic-mode . lsp-deferred)
            (lsp-mode . lsp-enable-which-key-integration))
     :bind (("<mouse-4>" . lsp-find-definition)
            ("S-<down-mouse-1>" . lsp-find-definition)
@@ -910,23 +1052,6 @@ comprehensive code navigation system that scales from buffer to project scope.
            ("s-'" . xref-go-back))
     :bind-keymap ("C-c l" . lsp-command-map))
 
-  (use-package lsp-ivy
-    :bind ("M-T" . 'lsp-ivy-workspace-symbol)
-    :config (advice-add 'lsp-ivy--goto-symbol :before
-                        (lambda (arg)
-                          (xref-push-marker-stack)))
-    (advice-add 'lsp-find-definition :before (lambda () (xref-push-marker-stack))))
-
-  (use-package ivy-xref
-    :init
-    ;; xref initialization is different in Emacs 27 - there are two different
-    ;; variables which can be set rather than just one
-    (when (>= emacs-major-version 27)
-      (setq xref-show-definitions-function #'ivy-xref-show-defs))
-    ;; Necessary in Emacs <27. In Emacs 27 it will affect all xref-based
-    ;; commands other than xref-find-definitions (e.g. project-find-regexp)
-    ;; as well
-    (setq xref-show-xrefs-function #'ivy-xref-show-xrefs))
 
 
   (use-package lsp-ui
@@ -942,7 +1067,7 @@ comprehensive code navigation system that scales from buffer to project scope.
                   lsp-ui-doc-max-height 20            ; Reasonable doc window size
                   lsp-ui-doc-max-width 80
                   ;; Peek window settings
-                  lsp-ui-peek-always-show t
+                  lsp-ui-peek-always-show nil      ; Jump directly with single candidate
                   lsp-ui-peek-list-width 40
                   lsp-ui-peek-peek-height 15)
     :bind (:map
@@ -950,8 +1075,39 @@ comprehensive code navigation system that scales from buffer to project scope.
            ([remap xref-find-definitions] . #'lsp-ui-peek-find-definitions)
            ([remap xref-find-references] . #'lsp-ui-peek-find-references)
            ;; Additional useful bindings
-           ("C-c l d" . #'lsp-ui-doc-show)         ; Show docs on demand
+           ("C-c l D" . #'lsp-ui-doc-show)         ; Show docs on demand
            ("C-c l i" . #'lsp-ui-imenu)))           ; LSP imenu
+#+end_src
+
+**** Consult-LSP Integration
+
+Consult-LSP provides enhanced LSP commands with live preview and better integration
+with the modern completion stack, replacing the functionality previously provided by lsp-ivy.
+
+#+begin_src emacs-lisp
+  (use-package consult-lsp
+    :defer t
+    :bind (:map lsp-mode-map
+           ("C-c l s" . consult-lsp-symbols)     ; LSP symbols
+           ("C-c l d" . consult-lsp-diagnostics) ; Project diagnostics
+           ("C-c l f" . consult-lsp-file-symbols)) ; File symbols
+    :config
+    ;; Add xref integration for workspace symbol navigation
+    (advice-add 'consult-lsp-symbols :before
+                (lambda (&rest _) (xref-push-marker-stack))))
+
+  ;; Enhanced M-T binding with fallback to project-wide search
+  (defun mvh/workspace-symbols-or-search ()
+    "Search workspace symbols via LSP if available, otherwise fall back to project grep."
+    (interactive)
+    (xref-push-marker-stack)
+    (if (and (bound-and-true-p lsp-mode)
+             (lsp-workspaces))
+        (consult-lsp-symbols)
+      (let ((term (thing-at-point 'symbol)))
+        (consult-ripgrep (projectile-project-root) term))))
+
+  (global-set-key (kbd "M-T") 'mvh/workspace-symbols-or-search)
 #+end_src
 
 While we're on ~xref~ and stuff. Let's also make is so that searching
@@ -1411,7 +1567,7 @@ I usually listen to Albums, so my workflow looks a bit like this:
   Soon I'll discover a simple way of selectively removing stuff from the
   playlist but I'm not quite there yet.
 
-#+begin_src  emacs-lisp
+#+begin_src emacs-lisp
   (use-package mpc
     :defer t
     :init

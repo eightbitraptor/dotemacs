@@ -816,7 +816,9 @@ async operations, and better integration. It replaces counsel and swiper.
     ;; Configure preview and async operations
     (setq consult-preview-key "M-."
           consult-narrow-key "<"
-          consult-project-function (lambda (_) (projectile-project-root)))
+          consult-project-function (lambda (_) 
+                                     (when (fboundp 'projectile-project-root)
+                                       (projectile-project-root))))
 
     ;; Configure async operations for performance
     (consult-customize

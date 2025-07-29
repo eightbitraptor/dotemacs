@@ -1687,7 +1687,7 @@ can use ~emacsclient~ in the terminal to open stuff in this instance.
 
 #+begin_src emacs-lisp
   (use-package server
-    :init
+    :config
     (unless (server-running-p)
       (server-start)))
 #+end_src

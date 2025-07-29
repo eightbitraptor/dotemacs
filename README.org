@@ -687,11 +687,68 @@ it's stupidly useful when using stuff I don't normally use everyday.
 I've set the delay to be quite long at 3s, just to make sure it
 doesn't get in my way when I'm doing normal things.
 
+The configuration below also adds descriptive labels for various prefix keys
+and custom commands to make them more discoverable. This includes grouping
+related commands under descriptive prefixes and providing clear descriptions
+for custom functions that might not be obvious from their names.
+
 #+begin_src emacs-lisp
   (use-package which-key
     :defer 1  ; Load 1 second after startup
-    :config (which-key-mode)
-            (setq which-key-idle-delay 3))
+    :config
+    (which-key-mode)
+    (setq which-key-idle-delay 3)
+
+    ;; Add descriptions for custom commands
+    (which-key-add-key-based-replacements
+      "C-d" "duplicate line"
+      "C-u" "unfill paragraph"
+      "C-+" "increase font size"
+      "C-=" "increase font size"
+      "C--" "decrease font size"
+      "M-t" "find symbol in buffer"
+      "M-T" "find symbol in project"
+      "M-o" "find file in project"
+      "C-S-g" "grep project"
+      "M-∑" "delete frame")
+
+    ;; Group C-c commands
+    (which-key-add-key-based-replacements
+      "C-c h" "consult history"
+      "C-c m" "consult mode command"
+      "C-c k" "consult kmacro"
+      "C-c s" "magit status"
+      "C-c C-t" "toggle imenu sidebar"
+      "C-c p" "projectile"
+      "C-c l" "lsp"
+      "C-c j" "journal")
+
+    ;; Group window management commands
+    (which-key-add-key-based-replacements
+      "s-<left>" "shrink window width"
+      "s-<right>" "enlarge window width"
+      "s-<up>" "enlarge window height"
+      "s-<down>" "shrink window height"
+      "s-<return>" "toggle fullscreen"
+      "s-'" "go back (xref)")
+
+    ;; Navigation and search groups
+    (which-key-add-key-based-replacements
+      "M-g" "goto"
+      "M-s" "search"
+      "C-x r" "registers/rectangles")
+
+    ;; Embark actions
+    (which-key-add-key-based-replacements
+      "C-." "embark act"
+      "C-;" "embark dwim"
+      "C-h B" "embark bindings")
+
+    ;; Execution commands
+    (which-key-add-key-based-replacements
+      "C-x C-m" "execute command (M-x)"
+      "C-c C-m" "execute command (M-x)"
+      "C-x C-n" "create note (denote)"))
 
 #+end_src
 
@@ -823,7 +880,7 @@ async operations, and better integration. It replaces counsel and swiper.
     ;; Configure preview and async operations
     (setq consult-preview-key "M-."
           consult-narrow-key "<"
-          consult-project-function (lambda (_) 
+          consult-project-function (lambda (_)
                                      (when (fboundp 'projectile-project-root)
                                        (projectile-project-root))))
 
@@ -1135,7 +1192,13 @@ comprehensive code navigation system that scales from buffer to project scope.
            ([remap xref-find-references] . #'lsp-ui-peek-find-references)
            ;; Additional useful bindings
            ("C-c l D" . #'lsp-ui-doc-show)         ; Show docs on demand
-           ("C-c l i" . #'lsp-ui-imenu)))           ; LSP imenu
+           ("C-c l i" . #'lsp-ui-imenu))           ; LSP imenu
+    :config
+    ;; Add which-key descriptions for LSP UI commands
+    (with-eval-after-load 'which-key
+      (which-key-add-key-based-replacements
+        "C-c l D" "show documentation"
+        "C-c l i" "imenu (LSP)")))
 #+end_src
 
 **** Consult-LSP Integration
@@ -1153,7 +1216,14 @@ with the modern completion stack, replacing the functionality previously provide
     :config
     ;; Add xref integration for workspace symbol navigation
     (advice-add 'consult-lsp-symbols :before
-                (lambda (&rest _) (xref-push-marker-stack))))
+                (lambda (&rest _) (xref-push-marker-stack)))
+
+    ;; Add which-key descriptions for consult-lsp commands
+    (with-eval-after-load 'which-key
+      (which-key-add-key-based-replacements
+        "C-c l s" "workspace symbols"
+        "C-c l d" "diagnostics"
+        "C-c l f" "file symbols")))
 
   ;; Enhanced M-T binding with fallback to project-wide search
   (defun mvh/workspace-symbols-or-search ()
@@ -1361,6 +1431,9 @@ rustic-mode. With a few keybindings to tie in to specific functions in lsp-mode
 
 Most of the useful stuff is actually defined in the lsp-mode section.
 
+The configuration includes which-key descriptions for the C-c C-c prefix to make
+Rust-specific commands more discoverable.
+
 #+begin_src emacs-lisp
   (use-package rustic
     :bind (:map rustic-mode-map
@@ -1370,7 +1443,15 @@ Most of the useful stuff is actually defined in the lsp-mode section.
     :config (setq lsp-enable-symbol-highlighting nil
                   lsp-signature-auto-activate nil
                   rustic-format-on-save nil)
-            (add-hook 'rustic-mode-hook 'mvh/rustic-mode-hook))
+            (add-hook 'rustic-mode-hook 'mvh/rustic-mode-hook)
+
+            ;; Add which-key descriptions for Rust commands
+            (with-eval-after-load 'which-key
+              (which-key-add-major-mode-key-based-replacements 'rustic-mode
+                "C-c C-c" "rust commands"
+                "C-c C-c a" "code action"
+                "C-c C-c r" "rename symbol"
+                "C-c C-c s" "analyzer status")))
 
   (defun mvh/rustic-mode-hook ()
     ;; so that run C-c C-c C-r works without having to confirm, but
@@ -1677,7 +1758,19 @@ I usually listen to Albums, so my workflow looks a bit like this:
                 ("p" . mpc-toggle-play)
                 ("P" . mpc-playlist)
                 ("s" . mpc-select)
-                ("S" . mpc-stop)))
+                ("S" . mpc-stop))
+    :config
+    ;; Add which-key descriptions for MPC commands
+    (with-eval-after-load 'which-key
+      (which-key-add-major-mode-key-based-replacements 'mpc-mode
+        "a" "add & unmark"
+        "A" "add selected"
+        "c" "clear selection"
+        "d" "delete from playlist"
+        "p" "play/pause"
+        "P" "show playlist"
+        "s" "select item"
+        "S" "stop playback")))
 #+end_src
 
 ** Emacs server

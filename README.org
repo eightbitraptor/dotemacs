@@ -22,10 +22,12 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
     - [[#setup-instructions][Setup Instructions]]
   - [[#general-editor-settings][General Editor Settings]]
     - [[#performance-and-startup-optimizations][Performance and Startup Optimizations]]
+    - [[#tree-sitter-setup][Tree-sitter Setup]]
     - [[#setting-up-the-path][Setting up the PATH]]
     - [[#no-littering][No littering]]
     - [[#fish-mode][Fish mode]]
     - [[#dirvish][Dirvish]]
+    - [[#icons][Icons]]
     - [[#organise-backup-files][Organise backup files]]
     - [[#theming-and-aesthetics][Theming and Aesthetics]]
     - [[#line-lengths][Line Lengths]]
@@ -54,14 +56,21 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
     - [[#which-key-tooltips][Which key tooltips]]
   - [[#navigation-search--project-management][Navigation, Search & Project Management]]
     - [[#ripgrep][Ripgrep]]
+    - [[#modern-completion-stack][Modern Completion Stack]]
+      - [[#orderless][Orderless]]
+      - [[#vertico][Vertico]]
+      - [[#marginalia][Marginalia]]
+      - [[#consult][Consult]]
+      - [[#embark][Embark]]
     - [[#imenu-list][Imenu-list]]
     - [[#projectile][Projectile]]
     - [[#direnv][Direnv]]
     - [[#editorconfig][Editorconfig]]
   - [[#programming-utilities][Programming Utilities]]
-    - [[#company-mode][Company mode]]
+    - [[#corfu-and-cape][Corfu and Cape]]
     - [[#magit][Magit]]
     - [[#lsp][LSP]]
+      - [[#consult-lsp-integration][Consult-LSP Integration]]
   - [[#language-modes][Language Modes]]
     - [[#ruby][Ruby]]
     - [[#c][C]]
@@ -973,6 +982,7 @@ I use it mainly for setting cflags on various projects.
 
 #+begin_src emacs-lisp
   (use-package direnv
+    :if (executable-find "direnv")
     :init (direnv-mode))
 #+end_src
 
@@ -1116,6 +1126,13 @@ LSP configuration provides intelligent IDE-like features across multiple languag
 delays, enables intelligent completion via completion-at-point-functions, and
 includes signature help for function parameters.
 
+For Ruby development, the configuration includes:
+- Automatic ruby-lsp installation when not found
+- Support for both system Ruby (with --user-install) and chruby-managed Rubies
+- Automatic PATH updates to find gems installed for the current Ruby version
+- Sorbet LSP support with automatic installation for Sorbet projects
+- Smart bundler detection - uses `bundle exec` when ruby-lsp is in the Gemfile
+
 Navigation works on multiple levels: ~M-t~ for buffer-scope symbol search via imenu,
 ~M-T~ for project-wide workspace symbols, and standard Emacs bindings (~M-.~ for
 go-to-definition, ~M-,~ for go-back) for call stack navigation. This creates a
@@ -1166,7 +1183,100 @@ comprehensive code navigation system that scales from buffer to project scope.
            ("<mouse-5>" . xref-go-back)
            ("<f12>" . lsp-find-references)
            ("s-'" . xref-go-back))
-    :bind-keymap ("C-c l" . lsp-command-map))
+    :bind-keymap ("C-c l" . lsp-command-map)
+    :config
+    ;; Auto-install ruby-lsp and sorbet when needed
+    (defun mvh/ensure-ruby-lsp-installed ()
+      "Ensure ruby-lsp and sorbet are installed for the current Ruby.
+This function checks if ruby-lsp is available and installs it if not.
+For Sorbet projects, it also ensures the Sorbet gem is installed.
+The function handles both system Ruby (with --user-install) and
+chruby-managed Rubies, updating PATH as needed."
+      ;; Update PATH first to ensure we check the right locations
+      (mvh/update-gem-path-for-chruby)
+      ;; First check in the current PATH (which includes chruby paths)
+      (unless (executable-find "ruby-lsp")
+        (message "ruby-lsp not found, attempting to install...")
+        (let* ((ruby-cmd "ruby -e 'puts RUBY_VERSION; puts Gem.user_dir; puts Gem.default_dir'")
+             (ruby-info (shell-command-to-string ruby-cmd))
+             (ruby-lines (split-string ruby-info "\n" t))
+             (ruby-version (car ruby-lines))
+             (gem-user-dir (cadr ruby-lines))
+             (gem-default-dir (caddr ruby-lines))
+             (ruby-path (executable-find "ruby"))
+             (use-user-install (string-prefix-p "/usr/bin" (or ruby-path "")))
+             (install-cmd (if use-user-install
+                              "gem install --user-install ruby-lsp"
+                            "gem install ruby-lsp")))
+        (message "Detected Ruby %s at %s" ruby-version ruby-path)
+        (when use-user-install
+          (message "System Ruby detected. Installing to user directory: %s" gem-user-dir))
+        (let ((install-result (call-process-shell-command install-cmd nil nil nil)))
+          (if (zerop install-result)
+              (progn
+                (message "ruby-lsp installation complete.")
+                ;; Add gem bin directories to exec-path
+                (when use-user-install
+                  (let ((gem-bin-dir (expand-file-name "bin" gem-user-dir)))
+                    (add-to-list 'exec-path gem-bin-dir)
+                    (setenv "PATH" (concat gem-bin-dir ":" (getenv "PATH")))))
+                ;; Also add the default gem bin directory for chruby-managed rubies
+                (let ((default-gem-bin (expand-file-name "bin" gem-default-dir)))
+                  (when (file-directory-p default-gem-bin)
+                    (add-to-list 'exec-path default-gem-bin)
+                    (setenv "PATH" (concat default-gem-bin ":" (getenv "PATH"))))))
+            (message "Failed to install ruby-lsp. Please install manually: %s" install-cmd)))))
+
+      ;; Check if this is a Sorbet project and ensure sorbet is installed
+      (when (or (file-exists-p "sorbet/config")
+                (locate-dominating-file default-directory "sorbet/config"))
+        (unless (zerop (call-process-shell-command "gem list sorbet -i" nil nil nil))
+          (message "Sorbet project detected but sorbet gem not found, installing...")
+          (let ((install-cmd (if (string-prefix-p "/usr/bin" (or (executable-find "ruby") ""))
+                                 "gem install --user-install sorbet sorbet-runtime"
+                               "gem install sorbet sorbet-runtime")))
+            (call-process-shell-command install-cmd nil nil nil)
+            (mvh/update-gem-path-for-chruby)))))
+
+    ;; Configure ruby-lsp for bundler projects
+    (defun mvh/configure-ruby-lsp-for-project ()
+      "Configure ruby-lsp to use bundler when appropriate."
+      (when (fboundp 'lsp-mode)
+        (let ((current-buffer (current-buffer))
+              (current-dir default-directory))
+          ;; Give chruby a moment to set up the environment
+          (run-with-idle-timer
+           0.1 nil
+           (lambda ()
+             (when (buffer-live-p current-buffer)
+               (with-current-buffer current-buffer
+                 ;; Ensure ruby-lsp is installed with the current Ruby
+                 (mvh/ensure-ruby-lsp-installed)
+                 ;; Check if we're in a bundler project
+                 (let ((gemfile (locate-dominating-file current-dir "Gemfile")))
+                   (when gemfile
+                     ;; Check if ruby-lsp is in the Gemfile
+                     (let ((gemfile-path (expand-file-name "Gemfile" gemfile))
+                           (has-ruby-lsp nil))
+                       (when (file-exists-p gemfile-path)
+                         (with-temp-buffer
+                           (insert-file-contents gemfile-path)
+                           (setq has-ruby-lsp
+                                 (save-excursion
+                                   (goto-char (point-min))
+                                   (re-search-forward "ruby-lsp" nil t)))))
+                       ;; Set the buffer-local variable in the current Ruby buffer
+                       (setq-local lsp-ruby-lsp-use-bundler has-ruby-lsp)))))))))
+
+    ;; Hook to configure ruby-lsp when entering ruby-ts-mode
+    ;; Add with lower priority (positive depth) to run after chruby
+    (add-hook 'ruby-ts-mode-hook 'mvh/configure-ruby-lsp-for-project 90)
+    (add-hook 'ruby-mode-hook 'mvh/configure-ruby-lsp-for-project 90)
+
+    ;; Configure lsp-mode settings for ruby-lsp
+    (lsp-register-custom-settings
+     '(("ruby-lsp.bundleGemfile" nil t)
+       ("ruby-lsp.formatter" "auto" t)))))
 
 
 
@@ -1255,8 +1365,6 @@ Some of the codebases I use often require frozen strings. So this convenience
 function will add the magic header if it's not already there.
 
 #+begin_src emacs-lisp
-  (use-package chruby)
-
   (defun ruby-frozen-string-literal ()
     "Check the current buffer for the magic comment # frozen_string_literal: true.
   If the comment doesn't exist, offer to insert it."
@@ -1268,26 +1376,86 @@ function will add the magic header if it's not already there.
         (insert "# frozen_string_literal: true\n\n"))))
 #+end_src
 
-I prefer to use rbenv to manage my Ruby versions, in conjunction with
-ruby-build. rbenv is pretty easy to understand, and whilst I'm not wild about
-the shims, it is working well for me. Work however, are all in on
-chruby and some of the bits of software I need to integrate with
-require it.
+I use chruby to manage my Ruby versions. It's simple and works well with
+.ruby-version files to automatically switch Ruby versions per project.
 
-So I'll use chruby mode when I have to, on my Shopify machine, and
-rbenv everywhere else
+The chruby configuration includes:
+- Automatic Ruby version switching based on .ruby-version files
+- PATH management to ensure gem executables are found after version switches
+- Support for a default Ruby version from ~/.ruby-version
+- High-priority hooks to ensure chruby activates before LSP and other tools
+
+The `mvh/update-gem-path-for-chruby` function ensures that after switching
+Ruby versions, the gem bin directories are added to Emacs' PATH. This is
+crucial for finding executables like ruby-lsp that are installed per Ruby version.
 
 I also use minitest for testing.
 
 #+begin_src emacs-lisp
-  (if (string-match "Shopify" (system-name))
-      (use-package chruby
-        :init (chruby "3.3.0"))
-    (use-package rbenv
-        :init (global-rbenv-mode)
-        (rbenv-use-global)))
+  (use-package chruby
+    :demand t  ; Load immediately
+    :init
+    ;; Initialize chruby paths
+    (setq chruby-mode t)
+    :config
+    ;; Function to update PATH with gem bin directories
+    (defun mvh/update-gem-path-for-chruby ()
+      "Update PATH to include gem bin directories for the current Ruby.
+This is necessary because chruby changes the Ruby executable but doesn't
+automatically update Emacs' exec-path with the corresponding gem bin directories.
+We add both the user gem directory (for gems installed with --user-install)
+and the default gem directory (for regular gem installs)."
+      (when (executable-find "ruby")
+        (let* ((gem-info (shell-command-to-string "ruby -e 'puts Gem.user_dir; puts Gem.default_dir'"))
+               (gem-lines (split-string gem-info "\n" t))
+               (gem-user-dir (car gem-lines))
+               (gem-default-dir (cadr gem-lines)))
+          ;; Add user gem bin directory
+          (when gem-user-dir
+            (let ((user-bin (expand-file-name "bin" gem-user-dir)))
+              (when (file-directory-p user-bin)
+                (add-to-list 'exec-path user-bin)
+                (setenv "PATH" (concat user-bin ":" (getenv "PATH"))))))
+          ;; Add default gem bin directory
+          (when gem-default-dir
+            (let ((default-bin (expand-file-name "bin" gem-default-dir)))
+              (when (file-directory-p default-bin)
+                (add-to-list 'exec-path default-bin)
+                (setenv "PATH" (concat default-bin ":" (getenv "PATH")))))))))
 
-    (use-package minitest :ensure t)
+    ;; Auto-detect Ruby version from .ruby-version files
+    (defun mvh/chruby-use-corresponding ()
+      "Use chruby to activate the Ruby version specified in .ruby-version."
+      (let ((ruby-version-file (locate-dominating-file default-directory ".ruby-version")))
+        (when ruby-version-file
+          (let ((ruby-version (with-temp-buffer
+                                (insert-file-contents (expand-file-name ".ruby-version" ruby-version-file))
+                                (string-trim (buffer-string)))))
+            (when (and ruby-version (not (string-empty-p ruby-version)))
+              (chruby ruby-version)
+              ;; Update PATH to include gem bin directory
+              (mvh/update-gem-path-for-chruby))))))
+
+    ;; Ensure chruby is activated early in the mode hook
+    (defun mvh/ruby-mode-chruby-setup ()
+      "Setup chruby for Ruby mode, running early in the hook."
+      (mvh/chruby-use-corresponding))
+
+    ;; Add with high priority (negative depth) to run early
+    (add-hook 'ruby-ts-mode-hook 'mvh/ruby-mode-chruby-setup -90)
+    (add-hook 'ruby-mode-hook 'mvh/ruby-mode-chruby-setup -90)
+    (add-hook 'projectile-after-switch-project-hook 'mvh/chruby-use-corresponding)
+
+    ;; Initialize chruby with default Ruby if available
+    (when (file-exists-p (expand-file-name ".ruby-version" "~"))
+      (let ((default-ruby (with-temp-buffer
+                            (insert-file-contents (expand-file-name ".ruby-version" "~"))
+                            (string-trim (buffer-string)))))
+        (when (and default-ruby (not (string-empty-p default-ruby)))
+          (chruby default-ruby)
+          (mvh/update-gem-path-for-chruby))))))
+
+  (use-package minitest :ensure t)
 #+end_src
 
 Ruby support is now handled by Tree-sitter via ruby-ts-mode, which provides

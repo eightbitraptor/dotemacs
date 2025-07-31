@@ -167,7 +167,10 @@ different environment.
     :init (setq exec-path-from-shell-variables '("PATH"
                                                  "MANPATH"
                                                  "GEM_HOME"
-                                                 "GEM_PATH"))
+                                                 "GEM_PATH"
+                                                 "RUBY_ROOT"
+                                                 "RUBY_ENGINE"
+                                                 "RUBY_VERSION"))
           (setq exec-path-from-shell-check-startup-files nil)
           (exec-path-from-shell-initialize))
 
@@ -1018,6 +1021,11 @@ there's only a single candidate, while cycling through multiple candidates when
 available. Tab will wrap around from the last candidate back to the first.
 Shift-Tab cycles backwards through the completion list.
 
+Nerd-icons-corfu integration adds visual icons to completion candidates, making it
+easier to distinguish between different types (functions, variables, classes, etc.)
+at a glance. This uses the locally installed nerd-icons fonts without any network
+requests, providing fast icon rendering in the completion popup.
+
 #+begin_src emacs-lisp
       (use-package corfu
         :demand t
@@ -1028,14 +1036,15 @@ Shift-Tab cycles backwards through the completion list.
         ;; Configure Corfu
         (setq corfu-cycle t                ; Enable cycling for `corfu-next/previous'
               corfu-auto t                 ; Enable auto completion
-              corfu-auto-delay 0.2         ; Small delay for better performance
-              corfu-auto-prefix 2          ; Minimum prefix length for auto completion
+              corfu-auto-delay 0.0         ; No delay - show completions immediately
+              corfu-auto-prefix 1          ; Show completions after just 1 character
               corfu-separator ?\s          ; Orderless field separator
               corfu-quit-no-match 'separator ; Quit at field separator
               corfu-preview-current nil    ; Disable current candidate preview
               corfu-preselect 'prompt      ; Preselect the prompt
               corfu-on-exact-match nil     ; Configure handling of exact matches
-              corfu-scroll-margin 5)       ; Use scroll margin
+              corfu-scroll-margin 5        ; Use scroll margin
+              corfu-max-width 100)         ; Limit popup width for faster rendering
 
         ;; Enable Corfu in the minibuffer
         (defun corfu-enable-in-minibuffer ()
@@ -1086,6 +1095,17 @@ Shift-Tab cycles backwards through the completion list.
         ;; Ensure that pcomplete does not write to the buffer
         (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
 
+      ;; Nerd-icons-corfu adds nerd-icons to corfu completions
+      (use-package nerd-icons-corfu
+        :after (corfu nerd-icons)
+        :demand t
+        :config
+        ;; Add nerd-icons formatter to corfu margin formatters
+        (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter)
+        
+        ;; Enable nerd-icons-corfu globally
+        (setq nerd-icons-corfu-show-icon t))
+
       ;; Corfu terminal support for non-graphical Emacs
       (use-package corfu-terminal
         :if (not (display-graphic-p))
@@ -1132,6 +1152,8 @@ For Ruby development, the configuration includes:
 - Automatic PATH updates to find gems installed for the current Ruby version
 - Sorbet LSP support with automatic installation for Sorbet projects
 - Smart bundler detection - uses `bundle exec` when ruby-lsp is in the Gemfile
+- A wrapper script approach for ruby-lsp that ensures chruby is sourced before
+  execution, solving PATH issues when LSP starts before chruby initialization
 
 Navigation works on multiple levels: ~M-t~ for buffer-scope symbol search via imenu,
 ~M-T~ for project-wide workspace symbols, and standard Emacs bindings (~M-.~ for
@@ -1146,7 +1168,7 @@ comprehensive code navigation system that scales from buffer to project scope.
     :init
     (setq lsp-keymap-prefix "C-c l")
     :config
-    (setq lsp-idle-delay 0.3  ; More reasonable delay for better performance
+    (setq lsp-idle-delay 0.1  ; Faster LSP response time
                   lsp-headerline-breadcrumb-enable nil
                   lsp-enable-on-type-formatting nil
                   lsp-enable-indentation nil
@@ -1167,6 +1189,8 @@ comprehensive code navigation system that scales from buffer to project scope.
                   lsp-enabled-clients '(clangd
                                         ruby-lsp-ls
                                         rust-analyzer)
+                  ;; Configure ruby-lsp to use the correct command
+                  lsp-ruby-lsp-server-command '("ruby-lsp")
                   lsp-clients-clangd-args '("--header-insertion=never"
                                             "--all-scopes-completion"
                                             "--background-index"))
@@ -1185,6 +1209,31 @@ comprehensive code navigation system that scales from buffer to project scope.
            ("s-'" . xref-go-back))
     :bind-keymap ("C-c l" . lsp-command-map)
     :config
+    ;; Function to update PATH with gem bin directories (duplicated here for availability)
+    (defun mvh/update-gem-path-for-chruby ()
+      "Update PATH to include gem bin directories for the current Ruby.
+This is necessary because chruby changes the Ruby executable but doesn't
+automatically update Emacs' exec-path with the corresponding gem bin directories.
+We add both the user gem directory (for gems installed with --user-install)
+and the default gem directory (for regular gem installs)."
+      (when (executable-find "ruby")
+        (let* ((gem-info (shell-command-to-string "ruby -e 'puts Gem.user_dir; puts Gem.default_dir'"))
+               (gem-lines (split-string gem-info "\n" t))
+               (gem-user-dir (car gem-lines))
+               (gem-default-dir (cadr gem-lines)))
+          ;; Add user gem bin directory
+          (when gem-user-dir
+            (let ((user-bin (expand-file-name "bin" gem-user-dir)))
+              (when (file-directory-p user-bin)
+                (add-to-list 'exec-path user-bin)
+                (setenv "PATH" (concat user-bin ":" (getenv "PATH"))))))
+          ;; Add default gem bin directory
+          (when gem-default-dir
+            (let ((default-bin (expand-file-name "bin" gem-default-dir)))
+              (when (file-directory-p default-bin)
+                (add-to-list 'exec-path default-bin)
+                (setenv "PATH" (concat default-bin ":" (getenv "PATH")))))))))
+
     ;; Auto-install ruby-lsp and sorbet when needed
     (defun mvh/ensure-ruby-lsp-installed ()
       "Ensure ruby-lsp and sorbet are installed for the current Ruby.
@@ -1276,7 +1325,43 @@ chruby-managed Rubies, updating PATH as needed."
     ;; Configure lsp-mode settings for ruby-lsp
     (lsp-register-custom-settings
      '(("ruby-lsp.bundleGemfile" nil t)
-       ("ruby-lsp.formatter" "auto" t)))))
+       ("ruby-lsp.formatter" "auto" t)))
+
+    ;; Create a wrapper script for ruby-lsp that handles Ruby version detection
+    (defun mvh/create-ruby-lsp-wrapper ()
+      "Create a wrapper script for ruby-lsp that works with chruby."
+      (let ((wrapper-path (expand-file-name "~/.emacs.d/bin/ruby-lsp-wrapper")))
+        (make-directory (file-name-directory wrapper-path) t)
+        (with-temp-file wrapper-path
+          (insert "#!/usr/bin/env bash\n"
+                  "# Wrapper script for ruby-lsp to work with chruby\n"
+                  "\n"
+                  "# Source chruby if available\n"
+                  "if [ -f /opt/homebrew/share/chruby/chruby.sh ]; then\n"
+                  "  source /opt/homebrew/share/chruby/chruby.sh\n"
+                  "elif [ -f /usr/local/share/chruby/chruby.sh ]; then\n"
+                  "  source /usr/local/share/chruby/chruby.sh\n"
+                  "fi\n"
+                  "\n"
+                  "# Auto-switch Ruby version based on .ruby-version\n"
+                  "if [ -f /opt/homebrew/share/chruby/auto.sh ]; then\n"
+                  "  source /opt/homebrew/share/chruby/auto.sh\n"
+                  "elif [ -f /usr/local/share/chruby/auto.sh ]; then\n"
+                  "  source /usr/local/share/chruby/auto.sh\n"
+                  "fi\n"
+                  "\n"
+                  "# Execute ruby-lsp\n"
+                  "exec ruby-lsp \"$@\"\n"))
+        (set-file-modes wrapper-path #o755)
+        wrapper-path))
+
+    ;; Create the wrapper script at startup
+    (let ((wrapper-path (mvh/create-ruby-lsp-wrapper)))
+      ;; Add the wrapper directory to exec-path
+      (add-to-list 'exec-path (file-name-directory wrapper-path))
+      ;; Override the ruby-lsp server command to use our wrapper
+      (with-eval-after-load 'lsp-mode
+        (setq lsp-ruby-lsp-server-command (list wrapper-path))))))
 
 
 
@@ -1388,6 +1473,11 @@ The chruby configuration includes:
 The `mvh/update-gem-path-for-chruby` function ensures that after switching
 Ruby versions, the gem bin directories are added to Emacs' PATH. This is
 crucial for finding executables like ruby-lsp that are installed per Ruby version.
+
+For ruby-lsp specifically, we use a wrapper script approach to ensure it can
+always be found regardless of when LSP mode tries to start it. The wrapper
+script sources chruby before executing ruby-lsp, ensuring the correct Ruby
+version is active.
 
 I also use minitest for testing.
 

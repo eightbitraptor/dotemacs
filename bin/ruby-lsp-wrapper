@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Wrapper script for ruby-lsp to work with chruby
+
+# Source chruby if available
+if [ -f /opt/homebrew/share/chruby/chruby.sh ]; then
+  source /opt/homebrew/share/chruby/chruby.sh
+elif [ -f /usr/local/share/chruby/chruby.sh ]; then
+  source /usr/local/share/chruby/chruby.sh
+fi
+
+# Auto-switch Ruby version based on .ruby-version
+if [ -f /opt/homebrew/share/chruby/auto.sh ]; then
+  source /opt/homebrew/share/chruby/auto.sh
+elif [ -f /usr/local/share/chruby/auto.sh ]; then
+  source /usr/local/share/chruby/auto.sh
+fi
+
+# Execute ruby-lsp
+exec ruby-lsp "$@"

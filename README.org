@@ -24,6 +24,7 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
     - [[#performance-and-startup-optimizations][Performance and Startup Optimizations]]
     - [[#tree-sitter-setup][Tree-sitter Setup]]
     - [[#setting-up-the-path][Setting up the PATH]]
+    - [[#terminal-emulation][Terminal Emulation]]
     - [[#no-littering][No littering]]
     - [[#fish-mode][Fish mode]]
     - [[#dirvish][Dirvish]]
@@ -71,6 +72,7 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
     - [[#magit][Magit]]
     - [[#lsp][LSP]]
       - [[#consult-lsp-integration][Consult-LSP Integration]]
+    - [[#ai-assistant-claude-code][AI Assistant (Claude Code)]]
   - [[#language-modes][Language Modes]]
     - [[#ruby][Ruby]]
     - [[#c][C]]
@@ -175,6 +177,23 @@ different environment.
           (exec-path-from-shell-initialize))
 
   (setq frame-resize-pixelwise t)
+#+end_src
+
+*** Terminal Emulation
+
+Vterm provides a fully-featured terminal emulator inside Emacs, which is required
+for packages like claude-code-ide that need to run interactive terminal sessions.
+
+#+begin_src emacs-lisp
+  (use-package vterm
+    :defer t
+    :config
+    ;; Set shell to use
+    (setq vterm-shell (or (getenv "SHELL") "/bin/bash"))
+    ;; Kill buffer when process exits
+    (setq vterm-kill-buffer-on-exit t)
+    ;; Increase scrollback
+    (setq vterm-max-scrollback 10000))
 #+end_src
 
 *** No littering
@@ -1102,7 +1121,7 @@ requests, providing fast icon rendering in the completion popup.
         :config
         ;; Add nerd-icons formatter to corfu margin formatters
         (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter)
-        
+
         ;; Enable nerd-icons-corfu globally
         (setq nerd-icons-corfu-show-icon t))
 
@@ -1440,6 +1459,44 @@ adds the point we're left on to the xref stack.
 #+begin_src emacs-lisp
   (advice-add 'isearch-forward :before (lambda (arg1 arg2) (xref-push-marker-stack)))
   (advice-add 'isearch-backward :before (lambda (arg1 arg2) (xref-push-marker-stack)))
+#+end_src
+
+*** AI Assistant (Claude Code)
+
+Claude Code IDE provides integration with the Claude CLI for AI-powered coding assistance within Emacs.
+
+First, we need to ensure all dependencies are available:
+
+#+begin_src emacs-lisp
+  ;; Required dependencies
+  (use-package websocket)
+  (use-package transient)
+  (use-package web-server)  ; Required for MCP tools server
+#+end_src
+
+Now we can set up Claude Code IDE with a minimal configuration:
+
+#+begin_src emacs-lisp
+  (use-package claude-code-ide
+    :straight (:type git :host github :repo "manzaltu/claude-code-ide.el")
+    :commands (claude-code-ide claude-code-ide-menu)
+    :config
+    ;; Enable MCP tools server
+    (require 'claude-code-ide-emacs-tools)
+    (setq claude-code-ide-enable-mcp-server t)
+    (claude-code-ide-emacs-tools-setup)
+    ;; Optional: Set window to right side at 50% width
+    (setq claude-code-ide-use-side-window t
+          claude-code-ide-window-position 'right
+          claude-code-ide-window-width (/ (frame-width) 2))
+    ;; Disable line numbers in Claude buffers
+    (add-hook 'vterm-mode-hook
+              (lambda ()
+                (when (string-match-p "^\\*claude-code\\[" (buffer-name))
+                  (display-line-numbers-mode -1))))
+    :bind
+    (("C-c a a" . claude-code-ide)
+     ("C-c a m" . claude-code-ide-menu)))
 #+end_src
 
 ** Language Modes

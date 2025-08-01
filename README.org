@@ -68,7 +68,7 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
     - [[#direnv][Direnv]]
     - [[#editorconfig][Editorconfig]]
   - [[#programming-utilities][Programming Utilities]]
-    - [[#corfu-and-cape][Corfu and Cape]]
+    - [[#company-mode][Company Mode]]
     - [[#magit][Magit]]
     - [[#lsp][LSP]]
       - [[#consult-lsp-integration][Consult-LSP Integration]]
@@ -816,7 +816,10 @@ it much more powerful for finding completions.
           completion-category-overrides '((file (styles . (partial-completion)))))
 
     ;; Configure orderless matching styles - optimized for performance
-    (setq orderless-matching-styles '(orderless-literal orderless-flex)))
+    (setq orderless-matching-styles '(orderless-literal orderless-regexp orderless-flex))
+
+    ;; Ensure completion updates as you type
+    (setq orderless-component-separator "[ &]"))  ; Space or & as separators
 #+end_src
 
 **** Vertico
@@ -1024,75 +1027,73 @@ useful. And we use them at work, so I guess I'll just deal with it.
 
 ** Programming Utilities
 
-*** Corfu and Cape
+*** Company Mode
 
-Corfu is a modern completion-at-point framework that integrates seamlessly with
-the native Emacs completion system. Unlike Company, Corfu leverages the built-in
-completion infrastructure, making it lighter and more consistent with our modern
-completion stack (Vertico, Orderless, Consult).
+Company handles completion lists and auto-complete stuff. I experimented with
+Corfu and cape but ultimately stuck with company because I want completion that
+narrows down as I type rather than a static list that corfu provides.
 
-Cape (Completion At Point Extensions) provides additional completion backends
-that work with Corfu, offering features like file path completion, dabbrev
-expansion, and more.
-
-The configuration below customizes Tab behavior to automatically complete when
-there's only a single candidate, while cycling through multiple candidates when
-available. Tab will wrap around from the last candidate back to the first.
-Shift-Tab cycles backwards through the completion list.
-
-Nerd-icons-corfu integration adds visual icons to completion candidates, making it
-easier to distinguish between different types (functions, variables, classes, etc.)
-at a glance. This uses the locally installed nerd-icons fonts without any network
-requests, providing fast icon rendering in the completion popup.
+Company has been around forever and just works. It's pretty solid with LSP,
+handles huge completion lists, and pretty much every programming mode supports
+it out of the box.
 
 #+begin_src emacs-lisp
-      (use-package corfu
+      (use-package company
         :demand t
         :init
-        ;; Enable Corfu globally
-        (global-corfu-mode)
+        (global-company-mode 1)
         :config
-        ;; Configure Corfu
-        (setq corfu-cycle t                ; Enable cycling for `corfu-next/previous'
-              corfu-auto t                 ; Enable auto completion
-              corfu-auto-delay 0.0         ; No delay - show completions immediately
-              corfu-auto-prefix 1          ; Show completions after just 1 character
-              corfu-separator ?\s          ; Orderless field separator
-              corfu-quit-no-match 'separator ; Quit at field separator
-              corfu-preview-current nil    ; Disable current candidate preview
-              corfu-preselect 'prompt      ; Preselect the prompt
-              corfu-on-exact-match nil     ; Configure handling of exact matches
-              corfu-scroll-margin 5        ; Use scroll margin
-              corfu-max-width 100)         ; Limit popup width for faster rendering
+        ;; Core performance and behavior settings
+        (setq company-idle-delay 0.0              ; No delay - show completions immediately
+              company-minimum-prefix-length 1     ; Show completions after just 1 character
+              company-tooltip-limit 10            ; Limit shown candidates for performance
+              company-tooltip-align-annotations t ; Align annotations on the right
+              company-require-match nil           ; Allow free typing
+              company-dabbrev-downcase nil        ; Preserve case in dabbrev completions
+              company-dabbrev-ignore-case nil     ; Case-sensitive dabbrev
+              company-show-quick-access t         ; Show quick-access numbers
+              company-selection-wrap-around t)    ; Wrap around when cycling
 
-        ;; Enable Corfu in the minibuffer
-        (defun corfu-enable-in-minibuffer ()
-          "Enable Corfu in the minibuffer if `completion-at-point' is bound."
-          (when (where-is-internal #'completion-at-point (list (current-local-map)))
-            (setq-local corfu-auto nil)    ; Disable auto completion in minibuffer
-            (corfu-mode 1)))
-        (add-hook 'minibuffer-setup-hook #'corfu-enable-in-minibuffer)
+        ;; Enable dynamic filtering - the key feature you want
+        (setq company-backends
+              '((company-capf              ; Completion-at-point (includes LSP)
+                 company-dabbrev-code      ; Dynamic abbreviations from code
+                 company-keywords          ; Programming language keywords
+                 company-files             ; File path completion
+                 company-dabbrev)))        ; Dynamic abbreviations from all buffers
 
-        ;; TAB cycle if there are only few candidates
-        (setq completion-cycle-threshold 3)
+        ;; Ensure completions update as you type
+        (setq company-abort-on-unique-match nil   ; Don't abort on unique match
+              company-continue-commands t)         ; Continue showing popup while typing
 
-        ;; Enable indentation+completion using the TAB key
-        (setq tab-always-indent 'complete)
+        ;; Key bindings for navigation
+        (define-key company-active-map (kbd "TAB") 'company-complete-selection)
+        (define-key company-active-map (kbd "<tab>") 'company-complete-selection)
+        (define-key company-active-map (kbd "S-TAB") 'company-select-previous)
+        (define-key company-active-map (kbd "<backtab>") 'company-select-previous)
+        (define-key company-active-map (kbd "C-n") 'company-select-next)
+        (define-key company-active-map (kbd "C-p") 'company-select-previous)
+        (define-key company-active-map (kbd "M-n") 'company-select-next-or-abort)
+        (define-key company-active-map (kbd "M-p") 'company-select-previous-or-abort)
 
-        (defun mvh/corfu-complete-or-next ()
-          "Complete if single candidate, otherwise cycle to next."
-          (interactive)
-          (if (= corfu--total 1)
-              (corfu-complete)
-            (corfu-next)))
+        ;; Improve performance with large candidate lists
+        (setq company-idle-delay 0.0
+              company-tooltip-idle-delay 0.0
+              company-async-timeout 5)
 
-        (define-key corfu-map (kbd "TAB") 'mvh/corfu-complete-or-next)
-        (define-key corfu-map (kbd "[tab]") 'mvh/corfu-complete-or-next)
-        (define-key corfu-map (kbd "S-TAB") 'corfu-previous)
-        (define-key corfu-map (kbd "[backtab]") 'corfu-previous)
-        (define-key corfu-map (kbd "<backtab>") 'corfu-previous))
+        ;; Enable Company in specific modes where it might be disabled
+        (dolist (hook '(eshell-mode-hook
+                        shell-mode-hook
+                        python-mode-hook
+                        emacs-lisp-mode-hook))
+          (add-hook hook 'company-mode)))
 
-      ;; Use Dabbrev with Corfu
+      ;; Use Company's built-in VSCode-style icons
+      (with-eval-after-load 'company
+        ;; Enable VSCode-style text icons that work everywhere
+        (setq company-format-margin-function #'company-vscode-dark-icons-margin))
+
+      ;; Use Dabbrev with Company
       (use-package dabbrev
         ;; Swap M-/ and C-M-/
         :bind (("M-/" . dabbrev-completion)
@@ -1100,36 +1101,28 @@ requests, providing fast icon rendering in the completion popup.
         :config
         (setq dabbrev-ignored-buffer-regexps '("\\.\\(?:pdf\\|jpe?g\\|png\\)\\'")))
 
-      ;; Cape provides Completion At Point Extensions
-      (use-package cape
-        :init
-        ;; Add `completion-at-point-functions', used by `completion-at-point'.
-        ;; NOTE: The order matters!
-        (add-to-list 'completion-at-point-functions #'cape-file)
-        (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+      ;; Company terminal support for non-graphical Emacs
+      (when (not (display-graphic-p))
+        (with-eval-after-load 'company
+          ;; Disable company-box in terminal
+          (setq company-box-enable nil)))
 
-        ;; Silence the pcomplete capf, no errors or messages!
-        (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
+      ;; LSP integration with Company
+      ;; Company automatically uses company-capf which LSP configures
+      (with-eval-after-load 'lsp-mode
+        ;; Ensure Company is used for completions
+        (setq lsp-completion-provider :capf)
 
-        ;; Ensure that pcomplete does not write to the buffer
-        (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
+        ;; Configure LSP to work well with Company's dynamic filtering
+        (setq lsp-completion-show-detail t
+              lsp-completion-show-kind t
+              lsp-completion-enable-additional-text-edit t
+              lsp-enable-snippet t)
 
-      ;; Nerd-icons-corfu adds nerd-icons to corfu completions
-      (use-package nerd-icons-corfu
-        :after (corfu nerd-icons)
-        :demand t
-        :config
-        ;; Add nerd-icons formatter to corfu margin formatters
-        (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter)
-
-        ;; Enable nerd-icons-corfu globally
-        (setq nerd-icons-corfu-show-icon t))
-
-      ;; Corfu terminal support for non-graphical Emacs
-      (use-package corfu-terminal
-        :if (not (display-graphic-p))
-        :config
-        (corfu-terminal-mode +1))
+        ;; Make sure Company respects LSP's sorting
+        (add-hook 'lsp-managed-mode-hook
+                  (lambda ()
+                    (setq-local company-transformers nil))))
 
 #+end_src
 

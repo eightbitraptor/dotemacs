@@ -973,6 +973,54 @@ Fair warning though. It seems to crap itself in ~org-mode~.
     :bind ("C-c C-t" . imenu-list-smart-toggle))
 #+end_src
 
+*** Treemacs
+
+Treemacs provides an IDE-style file tree sidebar with git integration, icons,
+and mouse support. It works well with our existing projectile and LSP setup.
+
+#+begin_src emacs-lisp
+  (use-package treemacs
+    :defer t
+    :init
+    ;; Add and expand projects automatically when visiting files
+    (setq treemacs-project-follow-mode t
+          treemacs-follow-mode t)
+    :config
+    ;; Basic settings - only what we need to change from defaults
+    (setq treemacs-width 35
+          treemacs-click-mouse-1 'single-click)  ; Single click to expand/collapse
+
+    ;; Enable modes for auto-behavior
+    (treemacs-follow-mode t)              ; Follow current buffer's file
+    (treemacs-project-follow-mode t)      ; Auto-add projects when opening files
+    (treemacs-filewatch-mode t)           ; Auto-refresh on file changes
+    (treemacs-fringe-indicator-mode t)    ; Show position indicator
+
+    ;; Enable git colors if available
+    (when (executable-find "git")
+      (treemacs-git-mode 'deferred))
+
+    ;; Use nerd-icons since we already have it
+    (treemacs-resize-icons 18)
+
+    :bind
+    (("C-x t t" . treemacs)
+     ("C-x t 0" . treemacs-select-window)))
+
+  ;; Integration with projectile for project management
+  (use-package treemacs-projectile
+    :after (treemacs projectile))
+
+  ;; Integration with magit for better git status display
+  (use-package treemacs-magit
+    :after (treemacs magit))
+
+  ;; Use nerd-icons instead of all-the-icons for consistency with your setup
+  (use-package treemacs-nerd-icons
+    :after treemacs
+    :config (treemacs-load-theme "nerd-icons"))
+#+end_src
+
 *** Projectile
 
 #+begin_src emacs-lisp
@@ -1201,6 +1249,15 @@ comprehensive code navigation system that scales from buffer to project scope.
                   lsp-enabled-clients '(clangd
                                         ruby-lsp-ls
                                         rust-analyzer)
+                  ;; Explicitly disable other Ruby language servers to suppress warnings
+                  lsp-disabled-clients '(steep-ls
+                                         solargraph
+                                         sorbet-ls
+                                         ruby-ls
+                                         semgrep-ls
+                                         ruby-syntax-tree-ls
+                                         rubocop-ls
+                                         typeprof-ls)
                   ;; Configure ruby-lsp to use the correct command
                   lsp-ruby-lsp-server-command '("ruby-lsp")
                   lsp-clients-clangd-args '("--header-insertion=never"
@@ -1253,6 +1310,21 @@ This function checks if ruby-lsp is available and installs it if not.
 For Sorbet projects, it also ensures the Sorbet gem is installed.
 The function handles both system Ruby (with --user-install) and
 chruby-managed Rubies, updating PATH as needed."
+      (message "[ruby-lsp] ensure-ruby-lsp-installed called")
+      (message "[ruby-lsp] Current Ruby: %s" (executable-find "ruby"))
+      (message "[ruby-lsp] Current chruby: %s" (chruby-current))
+      
+      ;; First ensure we're using the project's Ruby version
+      (let ((ruby-version-file (locate-dominating-file default-directory ".ruby-version")))
+        (when ruby-version-file
+          (let ((ruby-version (with-temp-buffer
+                                (insert-file-contents (expand-file-name ".ruby-version" ruby-version-file))
+                                (string-trim (buffer-string)))))
+            (message "[ruby-lsp] Project Ruby version: %s" ruby-version)
+            (when (and ruby-version (not (string-empty-p ruby-version)))
+              (chruby ruby-version)
+              (message "[ruby-lsp] Switched to Ruby: %s" (executable-find "ruby"))))))
+      
       ;; Update PATH first to ensure we check the right locations
       (mvh/update-gem-path-for-chruby)
       ;; First check in the current PATH (which includes chruby paths)
@@ -1535,7 +1607,7 @@ I also use minitest for testing.
   (use-package chruby
     :demand t  ; Load immediately
     :init
-    ;; Initialize chruby paths
+    ;; Initialize chruby paths - this enables chruby integration
     (setq chruby-mode t)
     :config
     ;; Function to update PATH with gem bin directories
@@ -1579,7 +1651,11 @@ and the default gem directory (for regular gem installs)."
     ;; Ensure chruby is activated early in the mode hook
     (defun mvh/ruby-mode-chruby-setup ()
       "Setup chruby for Ruby mode, running early in the hook."
-      (mvh/chruby-use-corresponding))
+      (message "[chruby setup] Starting for buffer %s in %s" (buffer-name) default-directory)
+      (message "[chruby setup] Ruby before: %s" (executable-find "ruby"))
+      (mvh/chruby-use-corresponding)
+      (message "[chruby setup] Ruby after: %s" (executable-find "ruby"))
+      (message "[chruby setup] Current ruby: %s" (chruby-current)))
 
     ;; Add with high priority (negative depth) to run early
     (add-hook 'ruby-ts-mode-hook 'mvh/ruby-mode-chruby-setup -90)

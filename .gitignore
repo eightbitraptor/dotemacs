@@ -10,7 +10,6 @@ customisations.el
 projectile-bookmarks.eld
 
 straight
-init.el
 README.el
 
 eln-cache

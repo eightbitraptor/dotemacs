@@ -72,6 +72,7 @@ earliest reference I can find is a really ugly screenshot of my work Mac circa
     - [[#magit][Magit]]
     - [[#lsp][LSP]]
       - [[#consult-lsp-integration][Consult-LSP Integration]]
+    - [[#dap-debug-adapter-protocol][DAP (Debug Adapter Protocol)]]
     - [[#ai-assistant-claude-code][AI Assistant (Claude Code)]]
   - [[#language-modes][Language Modes]]
     - [[#ruby][Ruby]]
@@ -145,16 +146,28 @@ autoloads and saves them to a file that loads quickly.
 
 *** Tree-sitter Setup
 
-Enable modern Tree-sitter based syntax parsing for better accuracy and performance.
-treesit-auto automatically installs Tree-sitter grammars and enables Tree-sitter
-modes for supported languages, replacing traditional modes with more precise parsing.
+Enable Tree-sitter selectively for C/C++ and Rust where it provides significant benefits
+for parsing complex syntax. Ruby uses enh-ruby-mode instead for better indent control
+and mature tooling support.
 
 #+begin_src emacs-lisp
-  (use-package treesit-auto
-    :demand t
-    :config
-    (treesit-auto-add-to-auto-mode-alist 'all)
-    (global-treesit-auto-mode))
+  ;; Manual Tree-sitter configuration for better performance and control
+  (when (treesit-available-p)
+    ;; Define grammar sources for languages where Tree-sitter excels
+    (setq treesit-language-source-alist
+          '((c "https://github.com/tree-sitter/tree-sitter-c")
+            (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
+            (rust "https://github.com/tree-sitter/tree-sitter-rust")))
+
+    ;; Use Tree-sitter modes for C/C++ and Rust only
+    (setq major-mode-remap-alist
+          '((c-mode . c-ts-mode)
+            (c++-mode . c++-ts-mode)
+            (rust-mode . rust-ts-mode)))
+
+    ;; Note: Run M-x treesit-install-language-grammar for each language
+    ;; on first use to compile the grammar libraries
+    )
 #+end_src
 
 *** Setting up the PATH
@@ -164,17 +177,36 @@ for consistency. This is important on macOS where processes are started with a
 different environment.
 
 #+begin_src emacs-lisp
+  ;; Cache for exec-path-from-shell to avoid repeated initialization
+  (defvar mvh/exec-path-initialized nil
+    "Whether exec-path-from-shell has been initialized.")
+
   (use-package exec-path-from-shell
     :if (memq system-type '(darwin gnu/linux))
-    :init (setq exec-path-from-shell-variables '("PATH"
-                                                 "MANPATH"
-                                                 "GEM_HOME"
-                                                 "GEM_PATH"
-                                                 "RUBY_ROOT"
-                                                 "RUBY_ENGINE"
-                                                 "RUBY_VERSION"))
-          (setq exec-path-from-shell-check-startup-files nil)
-          (exec-path-from-shell-initialize))
+    :defer t  ; Don't load immediately
+    :config
+    (setq exec-path-from-shell-variables '("PATH"
+                                          "MANPATH"
+                                          "GEM_HOME"
+                                          "GEM_PATH"
+                                          "RUBY_ROOT"
+                                          "RUBY_ENGINE"
+                                          "RUBY_VERSION"))
+    (setq exec-path-from-shell-check-startup-files nil)
+    (setq exec-path-from-shell-arguments '("-l"))  ; Use login shell for proper environment
+    :commands (exec-path-from-shell-initialize))
+
+  ;; Initialize exec-path lazily when needed for Ruby/programming modes
+  (defun mvh/ensure-exec-path ()
+    "Initialize exec-path from shell if not already done."
+    (unless mvh/exec-path-initialized
+      (require 'exec-path-from-shell nil t)
+      (when (fboundp 'exec-path-from-shell-initialize)
+        (exec-path-from-shell-initialize)
+        (setq mvh/exec-path-initialized t))))
+
+  ;; Hook into modes that need proper PATH
+  (add-hook 'prog-mode-hook #'mvh/ensure-exec-path)
 
   (setq frame-resize-pixelwise t)
 #+end_src
@@ -342,7 +374,8 @@ globally.
 
 #+begin_src emacs-lisp
   (setq-default line-spacing 5)
-  (global-display-line-numbers-mode t)
+  ;; Enable line numbers only in programming modes for better performance
+  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 #+end_src
 
 Now we'll configure the default fonts. We have to do this per OS because
@@ -420,8 +453,9 @@ This controls how many lines the mouse wheel scrolls by.
 #+end_src
 
 #+begin_src emacs-lisp
-  (use-package beacon
-    :config (beacon-mode 1))
+  ;; Disabled beacon-mode for better performance
+  ;; (use-package beacon
+  ;;   :config (beacon-mode 1))
 #+end_src
 
 *** Answer prompt questions faster
@@ -453,7 +487,7 @@ and in other tools, it's nice to not have to get hit with the prompt when I
 switch back to Emacs and try to edit something.
 
 #+begin_src emacs-lisp
-  (setq global-auto-revert-mode 1)
+  (global-auto-revert-mode 1)
 #+end_src
 
 *** Default Indentation
@@ -542,8 +576,9 @@ Makes sure I don't accidentally commit loads of bad whitespace.
 
 #+begin_src emacs-lisp
   (use-package ws-butler
-    :init (setq ws-butler-keep-whitespace-before-point nil)
-    (ws-butler-global-mode))
+    :hook (prog-mode . ws-butler-mode)  ; Only in programming modes
+    :config
+    (setq ws-butler-keep-whitespace-before-point nil))
 #+end_src
 
 ** Helper Functions
@@ -1087,12 +1122,10 @@ it out of the box.
 
 #+begin_src emacs-lisp
       (use-package company
-        :demand t
-        :init
-        (global-company-mode 1)
+        :hook (prog-mode . company-mode)  ; Only in programming modes
         :config
         ;; Core performance and behavior settings
-        (setq company-idle-delay 0.0              ; No delay - show completions immediately
+        (setq company-idle-delay 0.3              ; Small delay for better typing experience
               company-minimum-prefix-length 1     ; Show completions after just 1 character
               company-tooltip-limit 10            ; Limit shown candidates for performance
               company-tooltip-align-annotations t ; Align annotations on the right
@@ -1125,15 +1158,12 @@ it out of the box.
         (define-key company-active-map (kbd "M-p") 'company-select-previous-or-abort)
 
         ;; Improve performance with large candidate lists
-        (setq company-idle-delay 0.0
-              company-tooltip-idle-delay 0.0
+        (setq company-tooltip-idle-delay 0.3
               company-async-timeout 5)
 
         ;; Enable Company in specific modes where it might be disabled
         (dolist (hook '(eshell-mode-hook
-                        shell-mode-hook
-                        python-mode-hook
-                        emacs-lisp-mode-hook))
+                        shell-mode-hook))
           (add-hook hook 'company-mode)))
 
       ;; Use Company's built-in VSCode-style icons
@@ -1228,7 +1258,7 @@ comprehensive code navigation system that scales from buffer to project scope.
       :init
       (setq lsp-keymap-prefix "C-c l")
       :config
-      (setq lsp-idle-delay 0.1  ; Faster LSP response time
+      (setq lsp-idle-delay 0.5  ; Balance between responsiveness and performance
                     lsp-headerline-breadcrumb-enable nil
                     lsp-enable-on-type-formatting nil
                     lsp-enable-indentation nil
@@ -1268,7 +1298,8 @@ comprehensive code navigation system that scales from buffer to project scope.
              (c++-mode . lsp-deferred)
              (c-ts-mode . lsp-deferred)
              (c++-ts-mode . lsp-deferred)
-             (ruby-ts-mode . lsp-deferred)
+             (ruby-mode . lsp-deferred)
+             (enh-ruby-mode . lsp-deferred)
              (rustic-mode . lsp-deferred)
              (lsp-mode . lsp-enable-which-key-integration))
       :bind (("<mouse-4>" . lsp-find-definition)
@@ -1277,181 +1308,123 @@ comprehensive code navigation system that scales from buffer to project scope.
              ("<mouse-5>" . xref-go-back)
              ("<f12>" . lsp-find-references)
              ("s-'" . xref-go-back))
-      :bind-keymap ("C-c l" . lsp-command-map)
-      :config
-      ;; Function to update PATH with gem bin directories (duplicated here for availability)
-      (defun mvh/update-gem-path-for-chruby ()
-        "Update PATH to include gem bin directories for the current Ruby.
-  This is necessary because chruby changes the Ruby executable but doesn't
-  automatically update Emacs' exec-path with the corresponding gem bin directories.
-  We add both the user gem directory (for gems installed with --user-install)
-  and the default gem directory (for regular gem installs)."
-        (when (executable-find "ruby")
-          (let* ((gem-info (shell-command-to-string "ruby -e 'puts Gem.user_dir; puts Gem.default_dir'"))
-                 (gem-lines (split-string gem-info "\n" t))
-                 (gem-user-dir (car gem-lines))
-                 (gem-default-dir (cadr gem-lines)))
-            ;; Add user gem bin directory
-            (when gem-user-dir
-              (let ((user-bin (expand-file-name "bin" gem-user-dir)))
-                (when (file-directory-p user-bin)
-                  (add-to-list 'exec-path user-bin)
-                  (setenv "PATH" (concat user-bin ":" (getenv "PATH"))))))
-            ;; Add default gem bin directory
-            (when gem-default-dir
-              (let ((default-bin (expand-file-name "bin" gem-default-dir)))
-                (when (file-directory-p default-bin)
-                  (add-to-list 'exec-path default-bin)
-                  (setenv "PATH" (concat default-bin ":" (getenv "PATH")))))))))
+      :bind-keymap ("C-c l" . lsp-command-map))
 
-      ;; Auto-install ruby-lsp and sorbet when needed
-      (defun mvh/ensure-ruby-lsp-installed ()
-        "Ensure ruby-lsp and sorbet are installed for the current Ruby.
-  This function checks if ruby-lsp is available and installs it if not.
-  For Sorbet projects, it also ensures the Sorbet gem is installed.
-  The function handles both system Ruby (with --user-install) and
-  chruby-managed Rubies, updating PATH as needed."
-        (message "[ruby-lsp] ensure-ruby-lsp-installed called")
-        (message "[ruby-lsp] Current Ruby: %s" (executable-find "ruby"))
-        (message "[ruby-lsp] Current chruby: %s" (chruby-current))
+  ;; Additional LSP helper functions (defined outside use-package for availability)
+  (defun mvh/update-gem-path-for-chruby ()
+    "Update PATH to include gem bin directories for the current Ruby.
+This is necessary because chruby changes the Ruby executable but doesn't
+automatically update Emacs' exec-path with the corresponding gem bin directories.
+We add both the user gem directory (for gems installed with --user-install)
+and the default gem directory (for regular gem installs)."
+    (when (executable-find "ruby")
+      (let* ((gem-info (shell-command-to-string "ruby -e 'puts Gem.user_dir; puts Gem.default_dir'"))
+             (gem-lines (split-string gem-info "\n" t))
+             (gem-user-dir (car gem-lines))
+             (gem-default-dir (cadr gem-lines)))
+        ;; Add user gem bin directory
+        (when gem-user-dir
+          (let ((user-bin (expand-file-name "bin" gem-user-dir)))
+            (when (file-directory-p user-bin)
+              (add-to-list 'exec-path user-bin)
+              (setenv "PATH" (concat user-bin ":" (getenv "PATH"))))))
+        ;; Add default gem bin directory
+        (when gem-default-dir
+          (let ((default-bin (expand-file-name "bin" gem-default-dir)))
+            (when (file-directory-p default-bin)
+              (add-to-list 'exec-path default-bin)
+              (setenv "PATH" (concat default-bin ":" (getenv "PATH")))))))))
 
-        ;; First ensure we're using the project's Ruby version
-        (let ((ruby-version-file (locate-dominating-file default-directory ".ruby-version")))
-          (when ruby-version-file
-            (let ((ruby-version (with-temp-buffer
-                                  (insert-file-contents (expand-file-name ".ruby-version" ruby-version-file))
-                                  (string-trim (buffer-string)))))
-              (message "[ruby-lsp] Project Ruby version: %s" ruby-version)
-              (when (and ruby-version (not (string-empty-p ruby-version)))
-                (chruby ruby-version)
-                (message "[ruby-lsp] Switched to Ruby: %s" (executable-find "ruby"))))))
+  ;; Manual command to install ruby-lsp if needed
+  (defun mvh/install-ruby-lsp ()
+    "Manually install ruby-lsp for the current Ruby version."
+    (interactive)
+    (message "Installing ruby-lsp...")
+    (let* ((ruby-path (executable-find "ruby"))
+           (use-user-install (string-prefix-p "/usr/bin" (or ruby-path "")))
+           (install-cmd (if use-user-install
+                           "gem install --user-install ruby-lsp"
+                         "gem install ruby-lsp")))
+      (if (zerop (call-process-shell-command install-cmd nil nil nil))
+          (progn
+            (mvh/update-gem-path-for-chruby)
+            (message "ruby-lsp installed successfully"))
+        (message "Failed to install ruby-lsp. Please install manually: %s" install-cmd))))
 
-        ;; Update PATH first to ensure we check the right locations
-        (mvh/update-gem-path-for-chruby)
-        ;; First check in the current PATH (which includes chruby paths)
-        (unless (executable-find "ruby-lsp")
-          (message "ruby-lsp not found, attempting to install...")
-          (let* ((ruby-cmd "ruby -e 'puts RUBY_VERSION; puts Gem.user_dir; puts Gem.default_dir'")
-               (ruby-info (shell-command-to-string ruby-cmd))
-               (ruby-lines (split-string ruby-info "\n" t))
-               (ruby-version (car ruby-lines))
-               (gem-user-dir (cadr ruby-lines))
-               (gem-default-dir (caddr ruby-lines))
-               (ruby-path (executable-find "ruby"))
-               (use-user-install (string-prefix-p "/usr/bin" (or ruby-path "")))
-               (install-cmd (if use-user-install
-                                "gem install --user-install ruby-lsp"
-                              "gem install ruby-lsp")))
-          (message "Detected Ruby %s at %s" ruby-version ruby-path)
-          (when use-user-install
-            (message "System Ruby detected. Installing to user directory: %s" gem-user-dir))
-          (let ((install-result (call-process-shell-command install-cmd nil nil nil)))
-            (if (zerop install-result)
-                (progn
-                  (message "ruby-lsp installation complete.")
-                  ;; Add gem bin directories to exec-path
-                  (when use-user-install
-                    (let ((gem-bin-dir (expand-file-name "bin" gem-user-dir)))
-                      (add-to-list 'exec-path gem-bin-dir)
-                      (setenv "PATH" (concat gem-bin-dir ":" (getenv "PATH")))))
-                  ;; Also add the default gem bin directory for chruby-managed rubies
-                  (let ((default-gem-bin (expand-file-name "bin" gem-default-dir)))
-                    (when (file-directory-p default-gem-bin)
-                      (add-to-list 'exec-path default-gem-bin)
-                      (setenv "PATH" (concat default-gem-bin ":" (getenv "PATH"))))))
-              (message "Failed to install ruby-lsp. Please install manually: %s" install-cmd)))))
+  ;; Configure ruby-lsp for bundler projects (simplified, no auto-install)
+  (defun mvh/configure-ruby-lsp-for-project ()
+    "Configure ruby-lsp to use bundler when appropriate."
+    (when (fboundp 'lsp-mode)
+      ;; Check if we're in a bundler project
+      (let ((gemfile (locate-dominating-file default-directory "Gemfile")))
+        (when gemfile
+          ;; Check if ruby-lsp is in the Gemfile
+          (let ((gemfile-path (expand-file-name "Gemfile" gemfile))
+                (has-ruby-lsp nil))
+            (when (file-exists-p gemfile-path)
+              (with-temp-buffer
+                (insert-file-contents gemfile-path)
+                (setq has-ruby-lsp
+                      (save-excursion
+                        (goto-char (point-min))
+                        (re-search-forward "ruby-lsp" nil t)))))
+            ;; Set the buffer-local variable
+            (setq-local lsp-ruby-lsp-use-bundler has-ruby-lsp))))))
 
-        ;; Check if this is a Sorbet project and ensure sorbet is installed
-        (when (or (file-exists-p "sorbet/config")
-                  (locate-dominating-file default-directory "sorbet/config"))
-          (unless (zerop (call-process-shell-command "gem list sorbet -i" nil nil nil))
-            (message "Sorbet project detected but sorbet gem not found, installing...")
-            (let ((install-cmd (if (string-prefix-p "/usr/bin" (or (executable-find "ruby") ""))
-                                   "gem install --user-install sorbet sorbet-runtime"
-                                 "gem install sorbet sorbet-runtime")))
-              (call-process-shell-command install-cmd nil nil nil)
-              (mvh/update-gem-path-for-chruby)))))
+  ;; Hook to configure ruby-lsp when entering ruby modes
+  ;; Add with lower priority (positive depth) to run after chruby
+  (add-hook 'ruby-mode-hook 'mvh/configure-ruby-lsp-for-project 90)
+  (add-hook 'enh-ruby-mode-hook 'mvh/configure-ruby-lsp-for-project 90)
 
-      ;; Configure ruby-lsp for bundler projects
-      (defun mvh/configure-ruby-lsp-for-project ()
-        "Configure ruby-lsp to use bundler when appropriate."
-        (when (fboundp 'lsp-mode)
-          (let ((current-buffer (current-buffer))
-                (current-dir default-directory))
-            ;; Give chruby a moment to set up the environment
-            (run-with-idle-timer
-             0.1 nil
-             (lambda ()
-               (when (buffer-live-p current-buffer)
-                 (with-current-buffer current-buffer
-                   ;; Ensure ruby-lsp is installed with the current Ruby
-                   (mvh/ensure-ruby-lsp-installed)
-                   ;; Check if we're in a bundler project
-                   (let ((gemfile (locate-dominating-file current-dir "Gemfile")))
-                     (when gemfile
-                       ;; Check if ruby-lsp is in the Gemfile
-                       (let ((gemfile-path (expand-file-name "Gemfile" gemfile))
-                             (has-ruby-lsp nil))
-                         (when (file-exists-p gemfile-path)
-                           (with-temp-buffer
-                             (insert-file-contents gemfile-path)
-                             (setq has-ruby-lsp
-                                   (save-excursion
-                                     (goto-char (point-min))
-                                     (re-search-forward "ruby-lsp" nil t)))))
-                         ;; Set the buffer-local variable in the current Ruby buffer
-                         (setq-local lsp-ruby-lsp-use-bundler has-ruby-lsp)))))))))
+  ;; Configure lsp-mode settings for ruby-lsp (only after lsp-mode is loaded)
+  (with-eval-after-load 'lsp-mode
+    (lsp-register-custom-settings
+     '(("ruby-lsp.bundleGemfile" nil t)
+       ("ruby-lsp.formatter" "auto" t))))
 
-      ;; Hook to configure ruby-lsp when entering ruby-ts-mode
-      ;; Add with lower priority (positive depth) to run after chruby
-      (add-hook 'ruby-ts-mode-hook 'mvh/configure-ruby-lsp-for-project 90)
-      (add-hook 'ruby-mode-hook 'mvh/configure-ruby-lsp-for-project 90)
+  ;; Create a wrapper script for ruby-lsp that handles Ruby version detection
+  (defun mvh/create-ruby-lsp-wrapper ()
+    "Create a wrapper script for ruby-lsp that works with chruby."
+    (let ((wrapper-path (expand-file-name "~/.emacs.d/bin/ruby-lsp-wrapper")))
+      (make-directory (file-name-directory wrapper-path) t)
+      (with-temp-file wrapper-path
+        (insert "#!/usr/bin/env bash\n"
+                "# Wrapper script for ruby-lsp to work with chruby\n"
+                "\n"
+                "# Source chruby if available\n"
+                "if [ -f /opt/homebrew/share/chruby/chruby.sh ]; then\n"
+                "  source /opt/homebrew/share/chruby/chruby.sh\n"
+                "elif [ -f /usr/local/share/chruby/chruby.sh ]; then\n"
+                "  source /usr/local/share/chruby/chruby.sh\n"
+                "fi\n"
+                "\n"
+                "# Auto-switch Ruby version based on .ruby-version\n"
+                "if [ -f /opt/homebrew/share/chruby/auto.sh ]; then\n"
+                "  source /opt/homebrew/share/chruby/auto.sh\n"
+                "elif [ -f /usr/local/share/chruby/auto.sh ]; then\n"
+                "  source /usr/local/share/chruby/auto.sh\n"
+                "fi\n"
+                "\n"
+                "# Execute ruby-lsp\n"
+                "exec ruby-lsp \"$@\"\n"))
+      (set-file-modes wrapper-path #o755)
+      wrapper-path))
 
-      ;; Configure lsp-mode settings for ruby-lsp
-      (lsp-register-custom-settings
-       '(("ruby-lsp.bundleGemfile" nil t)
-         ("ruby-lsp.formatter" "auto" t)))
+  ;; Create the wrapper script at startup and configure LSP to use it
+  (defvar mvh/ruby-lsp-wrapper-path nil
+    "Path to the ruby-lsp wrapper script.")
 
-      ;; Create a wrapper script for ruby-lsp that handles Ruby version detection
-      (defun mvh/create-ruby-lsp-wrapper ()
-        "Create a wrapper script for ruby-lsp that works with chruby."
-        (let ((wrapper-path (expand-file-name "~/.emacs.d/bin/ruby-lsp-wrapper")))
-          (make-directory (file-name-directory wrapper-path) t)
-          (with-temp-file wrapper-path
-            (insert "#!/usr/bin/env bash\n"
-                    "# Wrapper script for ruby-lsp to work with chruby\n"
-                    "\n"
-                    "# Source chruby if available\n"
-                    "if [ -f /opt/homebrew/share/chruby/chruby.sh ]; then\n"
-                    "  source /opt/homebrew/share/chruby/chruby.sh\n"
-                    "elif [ -f /usr/local/share/chruby/chruby.sh ]; then\n"
-                    "  source /usr/local/share/chruby/chruby.sh\n"
-                    "fi\n"
-                    "\n"
-                    "# Auto-switch Ruby version based on .ruby-version\n"
-                    "if [ -f /opt/homebrew/share/chruby/auto.sh ]; then\n"
-                    "  source /opt/homebrew/share/chruby/auto.sh\n"
-                    "elif [ -f /usr/local/share/chruby/auto.sh ]; then\n"
-                    "  source /usr/local/share/chruby/auto.sh\n"
-                    "fi\n"
-                    "\n"
-                    "# Execute ruby-lsp\n"
-                    "exec ruby-lsp \"$@\"\n"))
-          (set-file-modes wrapper-path #o755)
-          wrapper-path))
+  (setq mvh/ruby-lsp-wrapper-path (mvh/create-ruby-lsp-wrapper))
+  ;; Add the wrapper directory to exec-path
+  (add-to-list 'exec-path (file-name-directory mvh/ruby-lsp-wrapper-path))
 
-      ;; Create the wrapper script at startup
-      (let ((wrapper-path (mvh/create-ruby-lsp-wrapper)))
-        ;; Add the wrapper directory to exec-path
-        (add-to-list 'exec-path (file-name-directory wrapper-path))
-        ;; Override the ruby-lsp server command to use our wrapper
-        (with-eval-after-load 'lsp-mode
-          (setq lsp-ruby-lsp-server-command (list wrapper-path))))))
+  ;; Override the ruby-lsp server command to use our wrapper
+  (with-eval-after-load 'lsp-mode
+    (when mvh/ruby-lsp-wrapper-path
+      (setq lsp-ruby-lsp-server-command (list mvh/ruby-lsp-wrapper-path))))
 
-
-
-    (use-package lsp-ui
-      :config (setq lsp-ui-sideline-mode nil
+  (use-package lsp-ui
+    :config (setq lsp-ui-sideline-mode nil
                     lsp-ui-flycheck-live-reporting nil
                     lsp-ui-sideline-enable nil
                     lsp-ui-sideline-show-diagnostics nil
@@ -1525,6 +1498,104 @@ adds the point we're left on to the xref stack.
 #+begin_src emacs-lisp
   (advice-add 'isearch-forward :before (lambda (arg1 arg2) (xref-push-marker-stack)))
   (advice-add 'isearch-backward :before (lambda (arg1 arg2) (xref-push-marker-stack)))
+#+end_src
+
+*** DAP (Debug Adapter Protocol)
+
+DAP mode provides a modern debugging interface for multiple languages through the Debug
+Adapter Protocol. For C/C++ development, it integrates with gdb/lldb and provides:
+- Visual breakpoint management
+- Step through code execution
+- Variable inspection and watch expressions
+- Stack frame navigation
+- Debug console for REPL-style debugging
+
+The configuration includes sensible defaults optimized for C debugging with gdb,
+including automatic installation of debug adapters when needed.
+
+All debug operations use the ~C-c d~ prefix, making them easy to discover via which-key.
+The debug UI is configured to use side windows that don't disrupt your main editing layout.
+
+#+begin_src emacs-lisp
+  (use-package dap-mode
+    :after lsp-mode
+    :commands (dap-debug dap-debug-edit-template)
+    :init
+    (setq dap-auto-configure-features '(sessions locals controls tooltip))
+    :config
+    (require 'dap-gdb-lldb)
+
+    (dap-register-debug-template
+     "GDB::Run"
+     (list :type "gdb"
+           :request "launch"
+           :name "GDB::Run"
+           :target nil
+           :cwd nil))
+
+    (dap-register-debug-template
+     "CRuby::Test"
+     (list :type "gdb"
+           :request "launch"
+           :name "CRuby Test"
+           :target "./miniruby"
+           :cwd "${workspaceFolder}"
+           :args (list "-I./lib" "-I." "-I.ext/common" "./tool/runruby.rb"
+                       "--archdir=." "--extout=.ext" "test.rb")))
+
+    (setq dap-ui-buffer-configurations
+          '((dap-ui-locals-buffer . ((side . right) (slot . 1) (window-width . 0.30)))
+            (dap-ui-expressions-buffer . ((side . right) (slot . 2) (window-width . 0.30)))
+            (dap-ui-sessions-buffer . ((side . right) (slot . 3) (window-width . 0.30)))
+            (dap-ui-breakpoints-buffer . ((side . left) (slot . 1) (window-width . 0.20)))
+            (dap-ui-repl-buffer . ((side . bottom) (slot . 1) (window-height . 0.25)))))
+
+    (setq dap-tooltip-mode t)
+
+    (add-hook 'dap-stopped-hook
+              (lambda (arg) (call-interactively #'dap-hydra)))
+
+    :bind
+    (("C-c d d" . dap-debug)
+     ("C-c d e" . dap-debug-edit-template)
+     ("C-c d l" . dap-debug-last)
+     ("C-c d r" . dap-debug-recent)
+     :map dap-mode-map
+     ("C-c d h" . dap-hydra)
+     ("C-c d b" . dap-breakpoint-toggle)
+     ("C-c d B" . dap-breakpoint-condition)
+     ("C-c d n" . dap-next)
+     ("C-c d s" . dap-step-in)
+     ("C-c d o" . dap-step-out)
+     ("C-c d c" . dap-continue)
+     ("C-c d q" . dap-disconnect)
+     ("C-c d Q" . dap-delete-all-sessions)
+     ("C-c d i" . dap-ui-inspect-thing-at-point)
+     ("C-c d w" . dap-ui-expressions-add)
+     ("C-c d W" . dap-ui-expressions-remove))
+
+    :config
+    (dap-ui-mode 1)
+
+    (with-eval-after-load 'which-key
+      (which-key-add-key-based-replacements
+        "C-c d" "debug"
+        "C-c d d" "start debug"
+        "C-c d e" "edit template"
+        "C-c d l" "debug last"
+        "C-c d r" "debug recent"
+        "C-c d h" "hydra menu"
+        "C-c d b" "toggle breakpoint"
+        "C-c d B" "conditional breakpoint"
+        "C-c d n" "next line"
+        "C-c d s" "step in"
+        "C-c d o" "step out"
+        "C-c d c" "continue"
+        "C-c d q" "disconnect"
+        "C-c d Q" "quit all sessions"
+        "C-c d i" "inspect"
+        "C-c d w" "add watch"
+        "C-c d W" "remove watch")))
 #+end_src
 
 *** AI Assistant (Claude Code)
@@ -1606,61 +1677,89 @@ I also use minitest for testing.
 
 #+begin_src emacs-lisp
   (use-package chruby
-    :demand t  ; Load immediately
+    :defer t  ; Load on demand, not immediately
     :init
     ;; Initialize chruby paths - this enables chruby integration
     (setq chruby-mode t)
     :config
-    ;; Function to update PATH with gem bin directories
+    ;; Cache variables to avoid repeated shell commands
+    (defvar mvh/chruby-cache (make-hash-table :test 'equal)
+      "Cache for Ruby version gem paths to avoid repeated shell commands.")
+
+    (defvar mvh/ruby-version-cache (make-hash-table :test 'equal)
+      "Cache for .ruby-version file contents.")
+
+    ;; Function to update PATH with gem bin directories - now with caching
     (defun mvh/update-gem-path-for-chruby ()
       "Update PATH to include gem bin directories for the current Ruby.
-This is necessary because chruby changes the Ruby executable but doesn't
-automatically update Emacs' exec-path with the corresponding gem bin directories.
-We add both the user gem directory (for gems installed with --user-install)
-and the default gem directory (for regular gem installs)."
-      (when (executable-find "ruby")
-        (let* ((gem-info (shell-command-to-string "ruby -e 'puts Gem.user_dir; puts Gem.default_dir'"))
-               (gem-lines (split-string gem-info "\n" t))
-               (gem-user-dir (car gem-lines))
-               (gem-default-dir (cadr gem-lines)))
-          ;; Add user gem bin directory
-          (when gem-user-dir
-            (let ((user-bin (expand-file-name "bin" gem-user-dir)))
-              (when (file-directory-p user-bin)
-                (add-to-list 'exec-path user-bin)
-                (setenv "PATH" (concat user-bin ":" (getenv "PATH"))))))
-          ;; Add default gem bin directory
-          (when gem-default-dir
-            (let ((default-bin (expand-file-name "bin" gem-default-dir)))
-              (when (file-directory-p default-bin)
-                (add-to-list 'exec-path default-bin)
-                (setenv "PATH" (concat default-bin ":" (getenv "PATH")))))))))
+Uses caching to avoid repeated shell commands for the same Ruby version."
+      (when-let ((ruby-path (executable-find "ruby")))
+        ;; Check if we already have this Ruby's paths cached
+        (let ((cached-paths (gethash ruby-path mvh/chruby-cache)))
+          (if cached-paths
+              ;; Use cached paths
+              (progn
+                (when (car cached-paths)
+                  (add-to-list 'exec-path (car cached-paths))
+                  (setenv "PATH" (concat (car cached-paths) ":" (getenv "PATH"))))
+                (when (cdr cached-paths)
+                  (add-to-list 'exec-path (cdr cached-paths))
+                  (setenv "PATH" (concat (cdr cached-paths) ":" (getenv "PATH")))))
+            ;; Not cached, fetch and cache (only happens once per Ruby version)
+            (let* ((gem-info (shell-command-to-string "ruby -e 'puts Gem.user_dir; puts Gem.default_dir'"))
+                   (gem-lines (split-string gem-info "\n" t))
+                   (gem-user-dir (car gem-lines))
+                   (gem-default-dir (cadr gem-lines))
+                   user-bin default-bin)
+              ;; Process user gem directory
+              (when gem-user-dir
+                (setq user-bin (expand-file-name "bin" gem-user-dir))
+                (when (file-directory-p user-bin)
+                  (add-to-list 'exec-path user-bin)
+                  (setenv "PATH" (concat user-bin ":" (getenv "PATH")))))
+              ;; Process default gem directory
+              (when gem-default-dir
+                (setq default-bin (expand-file-name "bin" gem-default-dir))
+                (when (file-directory-p default-bin)
+                  (add-to-list 'exec-path default-bin)
+                  (setenv "PATH" (concat default-bin ":" (getenv "PATH")))))
+              ;; Cache the paths for this Ruby
+              (puthash ruby-path (cons user-bin default-bin) mvh/chruby-cache))))))
 
-    ;; Auto-detect Ruby version from .ruby-version files
+    ;; Auto-detect Ruby version from .ruby-version files with caching
     (defun mvh/chruby-use-corresponding ()
-      "Use chruby to activate the Ruby version specified in .ruby-version."
-      (let ((ruby-version-file (locate-dominating-file default-directory ".ruby-version")))
-        (when ruby-version-file
-          (let ((ruby-version (with-temp-buffer
-                                (insert-file-contents (expand-file-name ".ruby-version" ruby-version-file))
-                                (string-trim (buffer-string)))))
-            (when (and ruby-version (not (string-empty-p ruby-version)))
-              (chruby ruby-version)
-              ;; Update PATH to include gem bin directory
-              (mvh/update-gem-path-for-chruby))))))
+      "Use chruby to activate the Ruby version specified in .ruby-version.
+Caches file contents to avoid repeated file reads."
+      (when-let ((ruby-version-file (locate-dominating-file default-directory ".ruby-version")))
+        (let* ((file-path (expand-file-name ".ruby-version" ruby-version-file))
+               (file-mtime (nth 5 (file-attributes file-path)))
+               (cached-data (gethash file-path mvh/ruby-version-cache))
+               ruby-version)
+          ;; Check cache validity
+          (if (and cached-data
+                   (equal (car cached-data) file-mtime))
+              ;; Use cached version
+              (setq ruby-version (cdr cached-data))
+            ;; Read file and update cache
+            (setq ruby-version (with-temp-buffer
+                                (insert-file-contents file-path)
+                                (string-trim (buffer-string))))
+            (puthash file-path (cons file-mtime ruby-version) mvh/ruby-version-cache))
+          ;; Only switch Ruby if needed
+          (when (and ruby-version
+                    (not (string-empty-p ruby-version))
+                    (not (string= ruby-version (chruby-current))))
+            (chruby ruby-version)
+            (mvh/update-gem-path-for-chruby)))))
 
-    ;; Ensure chruby is activated early in the mode hook
+    ;; Simplified setup - no debug messages for performance
     (defun mvh/ruby-mode-chruby-setup ()
-      "Setup chruby for Ruby mode, running early in the hook."
-      (message "[chruby setup] Starting for buffer %s in %s" (buffer-name) default-directory)
-      (message "[chruby setup] Ruby before: %s" (executable-find "ruby"))
-      (mvh/chruby-use-corresponding)
-      (message "[chruby setup] Ruby after: %s" (executable-find "ruby"))
-      (message "[chruby setup] Current ruby: %s" (chruby-current)))
+      "Setup chruby for Ruby mode efficiently."
+      (mvh/chruby-use-corresponding))
 
     ;; Add with high priority (negative depth) to run early
-    (add-hook 'ruby-ts-mode-hook 'mvh/ruby-mode-chruby-setup -90)
     (add-hook 'ruby-mode-hook 'mvh/ruby-mode-chruby-setup -90)
+    (add-hook 'enh-ruby-mode-hook 'mvh/ruby-mode-chruby-setup -90)
     (add-hook 'projectile-after-switch-project-hook 'mvh/chruby-use-corresponding)
 
     ;; Initialize chruby with default Ruby if available
@@ -1670,73 +1769,47 @@ and the default gem directory (for regular gem installs)."
                             (string-trim (buffer-string)))))
         (when (and default-ruby (not (string-empty-p default-ruby)))
           (chruby default-ruby)
-          (mvh/update-gem-path-for-chruby))))))
+          (mvh/update-gem-path-for-chruby)))))
 
   (use-package minitest :ensure t)
 #+end_src
 
-Ruby support is now handled by Tree-sitter via ruby-ts-mode, which provides
-superior syntax parsing and highlighting compared to traditional regex-based modes.
-treesit-auto automatically activates ruby-ts-mode for Ruby files and installs
-the required Tree-sitter grammar on first use.
+Ruby support is handled by enh-ruby-mode, which provides excellent syntax highlighting,
+smart indentation with built-in toggling between deep and shallow styles, and mature
+tooling that works reliably with LSP and other Ruby tools.
 
 #+begin_src emacs-lisp
-  ;; Configure Ruby Tree-sitter mode with equivalent functionality to enh-ruby-mode
-  (use-package ruby-ts-mode
-    :hook (ruby-ts-mode . subword-mode)
+  ;; Use enh-ruby-mode for superior Ruby editing experience
+  (use-package enh-ruby-mode
+    :mode ("\\(\\.rb\\|ru\\|rake\\|thor\\|jbuilder\\|gemspec\\|podspec\\|/\\(Gem\\|Rake\\|Cap\\|Thor\\|Vagrant\\|Guard\\|Pod\\)file\\)\\'"
+           . enh-ruby-mode)
+    :hook (enh-ruby-mode . subword-mode)
     :config
-    ;; Disable encoding magic comments (equivalent to enh-ruby-add-encoding-comment-on-save nil)
-    (setq ruby-insert-encoding-magic-comment nil)
+    ;; Disable encoding magic comments
+    (setq enh-ruby-add-encoding-comment-on-save nil)
 
-    ;; Set hanging brace indent level (equivalent to enh-ruby-hanging-brace-indent-level 2)
-    (setq ruby-method-params-indent 2)
+    ;; Enable the built-in indent bouncing - press TAB repeatedly to toggle
+    (setq enh-ruby-bounce-deep-indent t)
+
+    ;; Set hanging brace indent level
+    (setq enh-ruby-hanging-brace-indent-level 2)
+
+    ;; Start with shallow indenting by default
+    (setq enh-ruby-deep-indent-construct nil)
 
     ;; Enable case-insensitive search in Ruby buffers
-    (add-hook 'ruby-ts-mode-hook (lambda () (setq case-fold-search t)))
+    (add-hook 'enh-ruby-mode-hook (lambda () (setq case-fold-search t)))
 
-    ;; Configure indentation preferences
-    (setq ruby-indent-level 2)
-    (setq ruby-indent-tabs-mode nil)
-    (setq ruby-align-chained-calls t)
-    (setq ruby-deep-indent-paren nil) ; Start with shallow indenting
-
-    ;; Implement enh-ruby-bounce-deep-indent equivalent for ruby-ts-mode
-    (defun ruby-ts-bounce-deep-indent ()
-      "Toggle between deep and shallow indentation styles, similar to enh-ruby-bounce-deep-indent."
-      (interactive)
-      (let ((col (current-column)))
-        (setq ruby-deep-indent-paren (not ruby-deep-indent-paren)
-              ruby-deep-indent-paren-style (and ruby-deep-indent-paren 'opening))
-        (message "Ruby: Using %s indentation"
-                 (if ruby-deep-indent-paren "deep" "shallow"))
-        (save-excursion
-          (beginning-of-line)
-          (delete-horizontal-space)
-          (ruby-indent-line))
-        (move-to-column col)))
-
-    ;; Override TAB in ruby-ts-mode to include bounce functionality
-    (defun ruby-ts-tab-or-bounce ()
-      "Indent line, or toggle indentation style if already indented."
-      (interactive)
-      (if (= (current-indentation)
-             (or (save-excursion
-                   (beginning-of-line)
-                   (ruby-calculate-indent)) 0))
-          (ruby-ts-bounce-deep-indent)
-        (ruby-indent-line)))
-
-    ;; Bind TAB to our bounce function in ruby-ts-mode
-    (define-key ruby-ts-mode-map (kbd "TAB") 'ruby-ts-tab-or-bounce))
+    ;; Configure indentation
+    (setq enh-ruby-indent-level 2)
+    (setq enh-ruby-indent-tabs-mode nil))
 #+end_src
 
-Tree-sitter provides more accurate indentation and syntax highlighting than
-the previous enh-ruby-mode, with better performance through incremental parsing.
-The custom `ruby-ts-bounce-deep-indent` function replicates the enh-ruby-mode
-bounce functionality, allowing you to toggle between deep and shallow indentation
-styles with TAB when a line is already properly indented.
+With enh-ruby-mode, you get native support for toggling between deep and shallow
+indentation styles - just press TAB when your cursor is on an already-indented line
+to bounce between styles.
 
-**Deep indentation** (ruby-deep-indent-paren = t):
+**Deep indentation**:
 ```ruby
 test_var = if condition
              "yes"
@@ -1745,7 +1818,7 @@ test_var = if condition
            end
 ```
 
-**Shallow indentation** (ruby-deep-indent-paren = nil):
+**Shallow indentation**:
 ```ruby
 test_var = if condition
   "yes"
@@ -1753,7 +1826,6 @@ else
   "no"
 end
 ```
-
 *** C
 
 The Ruby core team maintain an emacs style mode inside the main CRuby source

@@ -1,6 +1,8 @@
 ;; Enable package quickstart (must be near the beginning)
 (setq package-quickstart t)
 
+(setq use-package-compute-statistics t)
+
 ;; Use UTF-8 everywhere
 (set-language-environment    'utf-8)
 (setq locale-coding-system   'utf-8)
@@ -48,8 +50,10 @@
 (use-package solaire-mode
   :hook (after-init . solaire-global-mode))
 
-(use-package doom-themes
-  :config (load-theme 'doom-moonlight :no-confirm))
+(use-package tokyonight-themes
+  :straight '(tokyonight-themes :type git :host github :repo "xuchengpeng/tokyonight-themes")
+  :config
+  (load-theme 'tokyonight-moon :no-confirm))
 
 (use-package nyan-mode
   :init (nyan-mode))
@@ -105,7 +109,6 @@
   :defer t)
 
 (use-package orderless
-  :defer t
   :config
   ;; Configure completion styles for optimal performance
   (setq completion-styles '(orderless flex basic partial-completion)
@@ -116,7 +119,7 @@
   (setq orderless-matching-styles '(orderless-literal orderless-regexp orderless-flex))
 
   ;; Ensure completion updates as you type
-  (setq orderless-component-separator "[ &]"))  ; Space or & as separators
+  (setq orderless-component-separator "[ &]"))
 
 ;; vertico/consult/marginalia - search and browse in the minibuffer.
 ;; modern replacement for Ivy/Helm that uses better Emacs conventions
@@ -183,6 +186,11 @@
 (use-package treemacs-nerd-icons
   :after treemacs
   :config (treemacs-load-theme "nerd-icons"))
+
+(use-package project
+  :straight (:type built-in))
+(use-package xref
+  :straight (:type built-in))
 
 (use-package projectile
   :config (setq projectile-dynamic-mode-line nil)
@@ -288,12 +296,12 @@
 (use-package enh-ruby-mode
   :ensure t
   :defer nil  ; Force immediate loading
-  :interpreter ("ruby" . enh-ruby-mode)
-  :mode (("\\.rb\\'" . enh-ruby-mode)
-         ("Gemfile\\'" . enh-ruby-mode)
-         ("\\.ru\\'" . enh-ruby-mode)
-         ("Rakefile\\'" . enh-ruby-mode)
-         ("\\.rake\\'" . enh-ruby-mode))
+  :interpreter "ruby"
+  :mode ("\\.rb$"
+         "Gemfile$"
+         "\\.ru$"
+         "Rakefile$"
+         "\\.rake$")
   :hook (enh-ruby-mode . subword-mode)
   :init
   ;; Ensure the mode is available before auto-mode-alist is modified
@@ -320,10 +328,6 @@
   :config (setq lsp-enable-symbol-highlighting nil
                 lsp-signature-auto-activate nil
                 rustic-format-on-save nil))
-
-(use-package ess
-  :mode "\\.R"
-  :defer t)
 
 (use-package web-mode
   :mode "\\.tsx"

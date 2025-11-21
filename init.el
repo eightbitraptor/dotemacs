@@ -247,7 +247,8 @@
   (setq magit-push-current-set-remote-if-missing nil)
   :bind ("C-c s" . magit-status))
 
-(append straight-built-in-pseudo-packages '(xref project flycheck))
+(dolist (pkg '(xref project flycheck))
+  (cl-pushnew pkg straight-built-in-pseudo-packages))
 (require 'xref)
 
 (advice-add 'isearch-forward :before (lambda (arg1 arg2) (xref-push-marker-stack)))
@@ -256,42 +257,138 @@
 (use-package tree-sitter
   :hook ((c-mode . tree-sitter-mode)
          (c++-mode . tree-sitter-mode)
-         (rust-mode . tree-sitter-mode)
          (rustic-mode . tree-sitter-mode)))
 
 (use-package tree-sitter-langs
   :after tree-sitter)
 
-(use-package eglot
-  :hook ((c-mode . eglot-ensure)
-         (c++-mode . eglot-ensure)
-         (c-ts-mode . eglot-ensure)
-         (c++-ts-mode . eglot-ensure)
-         (ruby-mode . eglot-ensure)
-         (enh-ruby-mode . eglot-ensure)
-         (rustic-mode . eglot-ensure))
-  :bind (("<mouse-4>" . xref-find-definitions)
-         ("S-<down-mouse-1>" . xref-find-definitions)
-         ("S-<down-mouse-2>" . xref-find-references)
+(defvar lsp-enabled-clients)
+(defvar lsp-disabled-clients)
+(defvar lsp-sorbet-as-add-on)
+
+(defconst mvh/ruby-lsp-disabled-clients
+  '(rubocop-ls ruby-ls steep-ls typeprof-ls ruby-syntax-tree-ls)
+  "Ruby-related LSP clients we never want to start automatically.")
+
+(defun mvh/sorbet-config-present-p ()
+  "Return non-nil when a Sorbet config exists above `default-directory'."
+  (or (locate-dominating-file default-directory "sorbet/config")
+      (locate-dominating-file default-directory ".sorbet/config")))
+
+(defun mvh/lsp-select-ruby-server ()
+  "Prefer ruby-lsp, fall back to Sorbet, disable all other Ruby LSP clients."
+  (let* ((disabled (copy-sequence mvh/ruby-lsp-disabled-clients))
+         (ruby-lsp (when (executable-find "ruby-lsp") 'ruby-lsp-ls))
+         (sorbet (when (and (executable-find "srb")
+                            (mvh/sorbet-config-present-p))
+                   'sorbet-ls))
+         (clients (delq nil (list ruby-lsp sorbet))))
+    (unless ruby-lsp
+      (push 'ruby-lsp-ls disabled))
+    (unless sorbet
+      (push 'sorbet-ls disabled))
+    (setq-local lsp-enabled-clients clients
+                lsp-disabled-clients disabled)
+    (unless clients
+      (message "No Ruby LSP server found. Install ruby-lsp or Sorbet for LSP support."))))
+
+;; LSP Mode configuration - minimal setup for C, Rust, and Ruby
+(use-package lsp-mode
+  :commands (lsp lsp-deferred)
+  :hook ((c-mode . lsp-deferred)
+         (c++-mode . lsp-deferred)
+         (c-ts-mode . lsp-deferred)
+         (c++-ts-mode . lsp-deferred)
+         (ruby-mode . lsp-deferred)
+         (enh-ruby-mode . lsp-deferred)
+         (rustic-mode . lsp-deferred))
+  :bind (:map lsp-mode-map
+         ("<mouse-4>" . lsp-find-definition)
+         ("S-<down-mouse-1>" . lsp-find-definition)
+         ("S-<down-mouse-2>" . lsp-find-references)
          ("<mouse-5>" . xref-go-back)
-         ("<f12>" . xref-find-references))
+         ("<f12>" . lsp-find-references)
+         ("C-c l d" . lsp-find-definition)
+         ("C-c l r" . lsp-find-references)
+         ("C-c l p" . lsp-ui-peek-find-references)
+         ("C-c l s" . consult-lsp-symbols))
+  :init
+  ;; Performance tuning - reduce overhead
+  (setq lsp-keymap-prefix "C-c l"
+        read-process-output-max (* 1024 1024) ; 1mb
+        lsp-idle-delay 0.5
+        lsp-log-io nil ; Disable IO logging for performance
+        lsp-completion-provider :capf ; Use completion-at-point
+        lsp-prefer-capf t
+        lsp-enable-snippet nil ; Disable snippet support since yasnippet is not installed
+        lsp-sorbet-as-add-on t)
+
+  (dolist (hook '(ruby-mode-hook enh-ruby-mode-hook))
+    (add-hook hook #'mvh/lsp-select-ruby-server))
   :config
-  (setq eglot-server-programs
-        '(((c-mode c++-mode) .
-                  ("clangd"
-                   "--header-insertion=never"
-                   "--enable-config"
-                   "--all-scopes-completion"
-                   "--background-index"))
-          ((ruby-mode enh-ruby-mode) . ("ruby-lsp"))
-          ((rust-mode rustic-mode) . ("rust-analyzer")))
-        eglot-ignored-server-capabilities
-        '(:documentOnTypeFormattingProvider
-          :documentFormattingProvider
-          :hoverProvider)
-        eglot-sync-connect nil
-        eglot-autoshutdown t
-        xref-show-definitions-function #'xref-show-definitions-completing-read))
+  ;; Configure LSP servers
+  (setq lsp-clients-clangd-args
+        '("--header-insertion=never"
+          "--enable-config"
+          "--all-scopes-completion"
+          "--background-index"
+          "--clang-tidy=false") ; Disable clang-tidy for performance
+
+        ;; Ruby LSP configuration with fallback
+        lsp-solargraph-use-bundler nil
+        lsp-ruby-lsp-use-bundler nil)
+
+  (require 'lsp-ruby-lsp nil t)
+  (require 'lsp-sorbet nil t)
+
+  ;; Disable features we don't need for performance
+  (setq lsp-enable-symbol-highlighting nil
+        lsp-enable-on-type-formatting nil
+        lsp-lens-enable nil
+        lsp-headerline-breadcrumb-enable nil
+        lsp-modeline-code-actions-enable nil
+        lsp-modeline-diagnostics-enable nil
+        lsp-modeline-workspace-status-enable nil
+        lsp-signature-auto-activate nil
+        lsp-signature-render-documentation nil
+        lsp-eldoc-enable-hover nil
+        lsp-completion-show-detail nil
+        lsp-completion-show-kind nil
+        lsp-diagnostics-provider :flymake) ; Keep diagnostics via flymake
+
+  ;; Disable flymake's built-in C/C++ backend to prevent conflicts
+  (defun my/lsp-disable-flymake-cc ()
+    (setq-local flymake-cc-command nil))
+  (dolist (hook '(c-mode-hook c++-mode-hook c-ts-mode-hook c++-ts-mode-hook))
+    (add-hook hook #'my/lsp-disable-flymake-cc))
+
+  ;; Keep session cleanup
+  (setq lsp-session-file (expand-file-name ".lsp-session-v1" user-emacs-directory)
+        lsp-keep-workspace-alive nil)
+
+  ;; Configure xref for better integration
+  (setq xref-show-definitions-function #'xref-show-definitions-completing-read))
+
+;; Optional: lsp-ui for peek functionality only
+(use-package lsp-ui
+  :after lsp-mode
+  :config
+  ;; Disable everything except peek
+  (setq lsp-ui-doc-enable nil
+        lsp-ui-sideline-enable nil
+        lsp-ui-flycheck-enable nil
+        lsp-ui-imenu-enable nil
+        lsp-ui-peek-enable t
+        lsp-ui-peek-list-width 60
+        lsp-ui-peek-peek-height 20))
+
+;; Integration with consult for symbol search
+(use-package consult-lsp
+  :after (lsp-mode consult)
+  :config
+  ;; Better fuzzy matching for symbols
+  (consult-customize
+   consult-lsp-symbols :preview-key "M-."))
 
 (use-package enh-ruby-mode
   :ensure t
@@ -324,7 +421,8 @@
 (use-package meson-mode :defer t)
 
 (use-package rustic
-  :hook (rust-mode . rustic-mode)
+  :init
+  (add-to-list 'major-mode-remap-alist '(rust-ts-mode . rustic-mode))
   :config (setq lsp-enable-symbol-highlighting nil
                 lsp-signature-auto-activate nil
                 rustic-format-on-save nil))

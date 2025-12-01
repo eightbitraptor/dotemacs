@@ -24,7 +24,8 @@
       frame-resize-pixelwise       t)
 
 ;; Disable package.el in favor of straight.el
-;;(setq package-enable-at-startup nil)
+(setq package-enable-at-startup nil
+      package-quickstart nil)
 
 ;; macOS-specific UI settings
 (when (eq system-type 'darwin)

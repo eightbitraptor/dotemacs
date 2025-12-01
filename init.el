@@ -1,7 +1,9 @@
-;; Enable package quickstart (must be near the beginning)
-(setq package-quickstart t)
+;; Toggle this to collect use-package load stats when profiling startup.
+(defvar mvh/profile-use-package-statistics nil
+  "Enable `use-package-compute-statistics' when non-nil.")
 
-(setq use-package-compute-statistics t)
+(when mvh/profile-use-package-statistics
+  (setq use-package-compute-statistics t))
 
 ;; Use UTF-8 everywhere
 (set-language-environment    'utf-8)
@@ -14,7 +16,7 @@
 (set-keyboard-coding-system  'utf-8)
 (set-selection-coding-system 'utf-8)
 
-(load-file (concat user-emacs-directory "helpers.el"))
+(load (expand-file-name "helpers" user-emacs-directory) 'noerror 'nomessage)
 
 (use-package vterm
   :defer t
@@ -34,8 +36,12 @@
   :init
   (exec-path-from-shell-initialize))
 
-(use-package chruby)
-(chruby-use "3.4.5")
+(use-package chruby
+  :config
+  (let ((default-ruby "3.4.5"))
+    (if (member default-ruby (chruby--available-names))
+        (chruby-use default-ruby)
+      (message "[chruby] Ruby %s not available; skipping activation" default-ruby))))
 
 (let ((backup-dir (expand-file-name "backup/" user-emacs-directory))
       (autosave-dir (expand-file-name "autosave/" user-emacs-directory)))
@@ -135,8 +141,14 @@
 
 (use-package marginalia
   :config
-  (marginalia-mode)
-  (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
+  (marginalia-mode))
+
+(use-package nerd-icons
+  :defer t)
+
+(use-package nerd-icons-completion
+  :after (marginalia nerd-icons)
+  :hook (marginalia-mode . nerd-icons-completion-marginalia-setup))
 
 (use-package consult
   :hook (completion-list-mode . consult-preview-at-point-mode)
@@ -167,6 +179,7 @@
   :bind ("C-c C-t" . imenu-list-smart-toggle))
 
 (use-package treemacs
+  :defer t
   :config (setq treemacs-width 35
                 treemacs-click-mouse-1 'single-click)
   (treemacs-follow-mode t)
@@ -480,8 +493,22 @@
 
 (add-hook 'emacs-startup-hook #'mvh/display-startup-time)
 
-;; Make gc pauses faster by decreasing the threshold.
-(setq gc-cons-threshold (* 2 1000 1000))
+(defconst mvh/default-gc-threshold (* 64 1024 1024)
+  "Default GC threshold to use after Emacs has started.")
+
+(defun mvh/reset-gc-threshold ()
+  (setq gc-cons-threshold mvh/default-gc-threshold
+        gc-cons-percentage 0.2))
+
+(mvh/reset-gc-threshold)
+
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (mvh/reset-gc-threshold)
+            (run-with-idle-timer
+             5 nil #'garbage-collect)))
+
+(add-hook 'focus-out-hook #'garbage-collect)
 
 (use-package server
   :config

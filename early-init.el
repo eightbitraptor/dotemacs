@@ -15,6 +15,8 @@
 (push '(menu-bar-lines . 0) default-frame-alist)
 (push '(tool-bar-lines . 0) default-frame-alist)
 (push '(vertical-scroll-bars) default-frame-alist)
+;; Transparency for some eyecandy
+(push '(alpha . 95) default-frame-alist)
 (setq frame-inhibit-implied-resize t)
 
 ;; Resizing the Emacs frame can be a terribly expensive part of changing the
